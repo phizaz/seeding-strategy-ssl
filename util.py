@@ -1,6 +1,7 @@
 import csv
 
 import numpy
+import random
 
 
 def load_data(file):
@@ -54,3 +55,15 @@ def is_prime(n):
         if n%(f+2) == 0: return False
         f +=6
     return True
+
+def random_list(n):
+    l = [i for i in range(n)]
+    for i in range(n):
+        rand = random.randint(0, n-1)
+        if rand != i:
+            l[i], l[rand] = l[rand], l[i]
+    return l
+
+# generate array with a given size (r) containig random members in range (0, n - 1)
+def seed_numbers(n, r):
+    return random_list(n)[:r]
