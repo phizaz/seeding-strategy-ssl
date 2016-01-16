@@ -6,7 +6,7 @@ from matplotlib.ticker import NullFormatter
 file = './datasets/iris/iris.data'
 data = util.load_data(file)
 
-label = 'Iris-versicolor'
+label = 'Iris-virginica'
 features = [0, 1]
 
 def select_only(label, data):
@@ -21,7 +21,7 @@ def remove_label(data):
 
 data = remove_label(data)
 
-data = util.convert_to_number(data)
+data = util.to_number(data)
 
 data = util.to_list(data)
 
