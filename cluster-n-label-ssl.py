@@ -1,4 +1,5 @@
 import alg
+import evaluator
 import random
 
 import util
@@ -10,8 +11,8 @@ import numpy
 file = './datasets/iris/iris.data'
 # given
 cluster_count = 3
+seed_count = 10
 n_seeding = 5
-seed_count = 40
 
 dataset = util.load_data(file)
 
@@ -31,19 +32,10 @@ def get_label(data):
 target = get_label(dataset)
 target = util.to_list(target)
 
-goodK = util.goodKforKNN(data, target)
-print('good K:', goodK)
+expected_acc = evaluator.cluster_n_label_knn(cluster_count,
+                                             seed_count,
+                                             data,
+                                             target,
+                                             n_seeding=n_seeding)
 
-accuracies = []
-for nth_seeding in range(n_seeding):
-    knn_ssl = alg.cluster_n_label_classifier(cluster_count=cluster_count,
-                                             seed_count=seed_count,
-                                             goodK=goodK)
-    scores = sklearn.cross_validation.cross_val_score(knn_ssl, data, target,cv=5)
-
-    print('scores:', scores)
-    acc = scores.mean()
-    accuracies.append(acc)
-
-expected_acc = numpy.array(accuracies).mean()
-print('expected acc:', expected_acc)
+print('expected_acc:', expected_acc)
