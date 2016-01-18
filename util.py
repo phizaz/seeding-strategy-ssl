@@ -9,9 +9,9 @@ from itertools import chain
 from operator import itemgetter
 
 
-def load_data(file):
+def load_data(file, delimiter=','):
     with open(file, newline='') as csvfile:
-        spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+        spamreader = csv.reader(csvfile, delimiter=delimiter, quotechar='|')
 
         result = []
         for row in spamreader:
@@ -89,6 +89,8 @@ def goodKforKNN(data, label, weights = 'uniform'):
                           range(1, int(len(data) ** 0.5) + 1))
 
     accuracies = []
+    worse_count = 0
+    worse_threshold = 15
     for k in search_range:
         print('testing k:', k)
         knn = sklearn.neighbors.KNeighborsClassifier(n_neighbors=k,
@@ -96,10 +98,20 @@ def goodKforKNN(data, label, weights = 'uniform'):
         scores = sklearn.cross_validation.cross_val_score(knn,
                                                           data,
                                                           label,
-                                                          cv = 5)
+                                                          cv = 5,
+                                                          n_jobs = 2)
         accuracy = scores.mean()
         print('acc:', accuracy)
+
+        if len(accuracies) > 0 and accuracy < accuracies[-1][1]:
+            worse_count += 1
+        else:
+            worse_count = 0
+
         accuracies.append((k, accuracy))
+
+        if worse_count >= worse_threshold:
+            break
 
     best_k, accuracy = max(accuracies, key=itemgetter(1))
 

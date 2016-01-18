@@ -40,7 +40,7 @@ def cluster_n_label(cluster_count, seed_count, data, target):
 
         # print('cluster:', prediction, 'label:', predicted_label, 'actual:', test[i][0])
 
-        if target[i][0] == predicted_label:
+        if target[i] == predicted_label:
             score += 1
 
     #print('score:', score, 'total:', len(data), 'acc:', (score / len(data)) * 100)

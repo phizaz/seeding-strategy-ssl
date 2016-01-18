@@ -1,46 +1,38 @@
 # KNN with interating over K to find the best K
 import sklearn.neighbors
+import sklearn.cross_validation
 
 import util
 
-file = './datasets/iris/iris.data'
+#file = './datasets/iris/iris.data'
+#file =  './datasets/pendigits/pendigits.tra'
+file = './datasets/letter-recognition/letter-recognition.data'
+#file = './datasets/satimage/sat.trn'
 
-data = util.load_data(file)
+dataset = util.load_data(file, delimiter=',')
 
 def remove_label(data):
-    return map(lambda x: x[:-1],
+    return map(lambda x: x[1:],
                data)
 
-train = remove_label(data)
-train = util.to_number(train)
-train = util.to_list(train)
+data = remove_label(dataset)
+data = util.to_number(data)
+data = util.to_list(data)
+data = util.rescale(data)
 
 def get_label(data):
-    return map(lambda x: x[-1],
+    return map(lambda x: x[0],
                data)
 
-label = list(get_label(data))
-print('label:', label)
+target = get_label(dataset)
+target = util.to_list(target)
 
-#primes = filter(lambda x: util.is_prime(x),
-#                range(2, 100))
+#goodK = util.goodKforKNN(data, target)
+goodK = 1
+print('goodK:', goodK)
 
-# odds performed better
-odds = filter(lambda x: x % 2,
-              range(1, 100))
+knn = sklearn.neighbors.KNeighborsClassifier(n_neighbors=goodK)
+scores = sklearn.cross_validation.cross_val_score(knn, data, target, cv=5, n_jobs=2)
 
-for neighbor_cnt in odds:
-    print('neighbor_cnt:', neighbor_cnt)
-    knn = sklearn.neighbors.KNeighborsClassifier(n_neighbors=neighbor_cnt)
-    knn.fit(train, label)
-
-    results = map(lambda x: knn.predict([x]),
-                  train)
-
-    results = util.to_list(results)
-
-    corrects = 0
-    for i, guess in enumerate(results):
-        corrects += 1 if guess[0] == label[i] else 0
-
-    print(corrects)
+print('scores:', scores)
+print('cv_acc:', scores.mean())

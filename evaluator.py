@@ -5,12 +5,14 @@ import numpy
 
 
 def cluster_n_label_knn(cluster_count, seed_count, data, target, n_seeding = 5):
-    goodK, _ = util.goodKforKNN(data, target)
+    #goodK, _ = util.goodKforKNN(data, target)
+    goodK = 1
     print('good K:', goodK)
 
     accuracies = []
     # remove uncertainty of randomized seeds
     for nth_seeding in range(n_seeding):
+        #print('seeding th:', nth_seeding)
         knn_ssl = alg.cluster_n_label_classifier(cluster_count=cluster_count,
                                                  seed_count=seed_count,
                                                  goodK=goodK)
