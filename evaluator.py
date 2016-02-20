@@ -6,7 +6,7 @@ import numpy
 
 def cluster_n_label_knn(cluster_count, seed_count, data, target, n_seeding = 5):
     #goodK, _ = util.goodKforKNN(data, target)
-    goodK = 1
+    goodK = 3
     print('good K:', goodK)
 
     accuracies = []
