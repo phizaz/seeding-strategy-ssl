@@ -1,15 +1,16 @@
 import util
 import time
 from pipe import Pipe
-from wrapper import kmeans, knn, predict, dump, average, evaluation, copy, echo
+from wrapper import kmeans, knn
+from pipetools import dump, copy, echo, predict, evaluation, average
 from splitter import cross
 from collections import Counter
 
 from pyrsistent import v, pvector
 from random import shuffle, randint
 
-# file = './datasets/iris/iris.data'
-file =  './datasets/pendigits/pendigits.tra'
+file = './datasets/iris/iris.data'
+# file =  './datasets/pendigits/pendigits.tra'
 dataset = util.load_data(file, delimiter=',')
 # print('dataset:', dataset)
 def remove_label(data):
@@ -89,28 +90,30 @@ def random_select_y(prob):
 
     return fn
 
-def kmeans_ssl(pipe, clusters, neighbors):
-    p = pipe \
-        .split(5) \
-            .pipe(kmeans(clusters)) \
-            .pipe(predict()) \
-            .pipe(copy('y', 'y_bak')) \
-            .y(random_select_y(0.1)) \
-            .y(label_consensus()) \
-            .pipe(knn(neighbors)) \
-            .pipe(predict()) \
-            .pipe(copy('y_bak', 'y')) \
-            .pipe(evaluation()) \
-        .merge('evaluation', average('evaluation'))
-    return p
+def kmeans_ssl(clusters, neighbors):
+    def fn(pipe):
+        p = pipe \
+            .split(5) \
+                .pipe(kmeans(clusters)) \
+                .pipe(predict()) \
+                .pipe(copy('y', 'y_bak')) \
+                .y(random_select_y(0.1)) \
+                .y(label_consensus()) \
+                .pipe(knn(neighbors)) \
+                .pipe(predict()) \
+                .pipe(copy('y_bak', 'y')) \
+                .pipe(evaluation()) \
+            .merge('evaluation', average('evaluation'))
+        return p
+    return fn
 
 start_time = time.time()
 
 p = Pipe() \
     .x(points) \
     .y(target) \
-    .split(5, cross())
-p = kmeans_ssl(p, 5, 3) \
+    .split(5, cross()) \
+        .bypass(kmeans_ssl(clusters=5, neighbors=3)) \
     .merge('evaluation', average('evaluation')) \
     .pipe(dump('evaluation'))
 

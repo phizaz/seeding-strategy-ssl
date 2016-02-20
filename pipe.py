@@ -134,3 +134,9 @@ class Pipe:
         # fn(instance) -> instance
         new_stack = self._traverse(fn)
         return Pipe(new_stack)
+
+    '''
+    bypass is for chaining an arbitrary function to the pipe (not mapping function)
+    '''
+    def bypass(self, fn):
+        return fn(self)
