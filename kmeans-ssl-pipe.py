@@ -1,13 +1,15 @@
 import util
+import time
 from pipe import Pipe
-from wrapper import kmeans, knn, predict, dump, average, evaluation, copy
+from wrapper import kmeans, knn, predict, dump, average, evaluation, copy, echo
 from splitter import cross
 from collections import Counter
 
 from pyrsistent import v, pvector
 from random import shuffle, randint
 
-file = './datasets/iris/iris.data'
+# file = './datasets/iris/iris.data'
+file =  './datasets/pendigits/pendigits.tra'
 dataset = util.load_data(file, delimiter=',')
 # print('dataset:', dataset)
 def remove_label(data):
@@ -102,6 +104,8 @@ def kmeans_ssl(pipe, clusters, neighbors):
         .merge('evaluation', average('evaluation'))
     return p
 
+start_time = time.time()
+
 p = Pipe() \
     .x(points) \
     .y(target) \
@@ -109,3 +113,7 @@ p = Pipe() \
 p = kmeans_ssl(p, 5, 3) \
     .merge('evaluation', average('evaluation')) \
     .pipe(dump('evaluation'))
+
+end_time = time.time()
+
+print('time elapsed:', (end_time - start_time))

@@ -1,6 +1,11 @@
 import pvectorc
-
+from parmap import parmap
 from pyrsistent import pmap, pvector, v, m
+
+# cpu_count = multiprocessing.cpu_count()
+cpu_count = 2
+
+print('cpu:', cpu_count)
 
 class Pipe:
 
@@ -71,13 +76,35 @@ class Pipe:
         new_stack = self.stack[:-2].append(new_top)
         return Pipe(new_stack)
 
+    '''
+    traverse, updatede to ues multi-core processors
+    '''
     def _traverse(self, fn):
-        # fn(instance)
+        def probe(l):
+            if not isinstance(l, pvectorc.PVector):
+                return [l]
+            else:
+                result = []
+                for x in l:
+                    tmp = probe(x)
+                    result += tmp
+                return result
+
+        queue = probe(self.stack)
+        # print('queue:', queue)
+
+        result = parmap(fn, queue, cpu_count)
+        # print('result:', result)
+        result_pt = 0
+
         def run(l):
             if not isinstance(l, pvectorc.PVector):
-                return fn(l)
+                nonlocal result_pt
+                result_pt += 1
+                return result[result_pt - 1]
             else:
                 return pvector(list(map(lambda x: run(x), l)))
+
         new_stack = run(self.stack)
         return new_stack
 

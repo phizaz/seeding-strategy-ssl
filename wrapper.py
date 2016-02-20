@@ -97,6 +97,12 @@ def dump(key):
         return pipe
     return fn
 
+def echo(str):
+    def fn(pipe):
+        print(str)
+        return pipe
+    return fn
+
 def copy(a, b):
     def fn(pipe):
         if not a in pipe:
