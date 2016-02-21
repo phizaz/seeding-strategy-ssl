@@ -2,7 +2,7 @@ import util
 import time
 from pipe import Pipe
 from wrapper import kmeans, knn
-from pipetools import dump, copy, echo, predict, evaluation, average
+from pipetools import dump, copy, echo, predict, evaluate, average, load_x, load_y
 from splitter import cross
 from collections import Counter
 
@@ -10,23 +10,8 @@ from pyrsistent import v, pvector
 from random import shuffle, randint
 
 file = './datasets/iris/iris.data'
-# file =  './datasets/pendigits/pendigits.tra'
-dataset = util.load_data(file, delimiter=',')
-# print('dataset:', dataset)
-def remove_label(data):
-    return map(lambda x: x[:-1],
-               data)
-points = remove_label(dataset)
-points = util.to_number(points)
-points = util.to_list(points)
-points = util.rescale(points)
-
-def get_label(data):
-    return map(lambda x: x[-1],
-               data)
-
-target = get_label(dataset)
-target = util.to_list(target)
+points = load_x(file, delimiter=',')
+target = load_y(file, delimiter=',')
 
 def label_consensus():
     def fn(pipe):
@@ -102,7 +87,7 @@ def kmeans_ssl(clusters, neighbors):
                 .pipe(knn(neighbors)) \
                 .pipe(predict()) \
                 .pipe(copy('y_bak', 'y')) \
-                .pipe(evaluation()) \
+                .pipe(evaluate()) \
             .merge('evaluation', average('evaluation'))
         return p
     return fn
@@ -113,7 +98,7 @@ p = Pipe() \
     .x(points) \
     .y(target) \
     .split(5, cross()) \
-        .bypass(kmeans_ssl(clusters=5, neighbors=3)) \
+        .connect(kmeans_ssl(clusters=3, neighbors=1)) \
     .merge('evaluation', average('evaluation')) \
     .pipe(dump('evaluation'))
 

@@ -1,3 +1,19 @@
+import util
+
+def load_x(file_path, delimiter = ',', remove_label = lambda x: x[:-1]):
+    dataset = util.load_data(file_path, delimiter=',')
+    points = map(remove_label, dataset)
+    points = util.to_number(points)
+    points = util.to_list(points)
+    points = util.rescale(points)
+    return points
+
+def load_y(file_path, delimiter = ',', get_label = lambda x: x[-1]):
+    dataset = util.load_data(file_path, delimiter=',')
+    points = map(get_label, dataset)
+    points = util.to_list(points)
+    return points
+
 def predict():
     def fn(pipe):
         if not 'model' in pipe:
@@ -19,7 +35,7 @@ def predict():
 
     return fn
 
-def evaluation():
+def evaluate():
     def fn(pipe):
         if not 'prediction' in pipe:
             raise Exception('no prediction')

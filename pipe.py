@@ -136,7 +136,7 @@ class Pipe:
         return Pipe(new_stack)
 
     '''
-    bypass is for chaining an arbitrary function to the pipe (not mapping function)
+    connect is for chaining an arbitrary function to the pipe (not mapping function)
     '''
-    def bypass(self, fn):
+    def connect(self, fn):
         return fn(self)
