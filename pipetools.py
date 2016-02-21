@@ -1,4 +1,5 @@
 import util
+import time
 
 def load_x(file_path, delimiter = ',', remove_label = lambda x: x[:-1]):
     dataset = util.load_data(file_path, delimiter=',')
@@ -15,14 +16,14 @@ def load_y(file_path, delimiter = ',', get_label = lambda x: x[-1]):
     return points
 
 def predict():
-    def fn(pipe):
-        if not 'model' in pipe:
+    def fn(inst):
+        if not 'model' in inst:
             raise Exception('no model')
-        if not 'x' in pipe:
+        if not 'x' in inst:
             raise Exception('no x')
 
-        x = pipe['x']
-        model = pipe['model']
+        x = inst['x']
+        model = inst['model']
 
         prediction = []
         for point in x:
@@ -31,19 +32,19 @@ def predict():
 
         # print('prediction:', prediction)
 
-        return pipe.set('prediction', prediction)
+        return inst.set('prediction', prediction)
 
     return fn
 
 def evaluate():
-    def fn(pipe):
-        if not 'prediction' in pipe:
+    def fn(inst):
+        if not 'prediction' in inst:
             raise Exception('no prediction')
-        if not 'y' in pipe:
+        if not 'y' in inst:
             raise Exception('no y')
 
-        prediction = pipe['prediction']
-        y = pipe['y']
+        prediction = inst['prediction']
+        y = inst['y']
 
         if len(prediction) != len(y):
             raise Exception('len y != prediction')
@@ -53,30 +54,30 @@ def evaluate():
         for y, Y in zip(y, prediction):
             correct += y == Y
 
-        return pipe.set('evaluation', (correct, total))
+        return inst.set('evaluation', (correct, total))
 
     return fn
 
 def average(field):
-    def fn(list):
+    def fn(inst):
         s = 0
         t = 0
-        for pipe in list:
+        for pipe in inst:
             e = pipe[field]
             # print('eval:', e)
             s += e[0]
             t += e[1]
-        return s / len(list), t / len(list)
+        return s / len(inst), t / len(inst)
 
     return fn
 
 def dump(key):
-    def fn(pipe):
-        if not key in pipe:
+    def fn(inst):
+        if not key in inst:
             raise Exception('no ' + key)
 
-        print(key, ':', pipe[key])
-        return pipe
+        print(key, ':', inst[key])
+        return inst
     return fn
 
 def echo(str):
@@ -86,8 +87,22 @@ def echo(str):
     return fn
 
 def copy(a, b):
-    def fn(pipe):
-        if not a in pipe:
+    def fn(inst):
+        if not a in inst:
             raise Exception('no ' + a)
-        return pipe.set(b, pipe[a])
+        return inst.set(b, inst[a])
+    return fn
+
+def start_timer():
+    def fn(pipe):
+        start_time = time.time()
+        return pipe.attach('start_time', start_time)
+    return fn
+
+def stop_timer():
+    def fn(pipe):
+        start_time = pipe.read('start_time')
+        end_time = time.time()
+        print('time elapsed:', end_time - start_time)
+        return pipe.attach('end_time', end_time)
     return fn

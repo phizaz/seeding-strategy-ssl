@@ -2,7 +2,7 @@ import util
 import time
 from pipe import Pipe
 from wrapper import kmeans, knn
-from pipetools import dump, copy, echo, predict, evaluate, average, load_x, load_y
+from pipetools import *
 from splitter import cross
 from collections import Counter
 
@@ -96,7 +96,9 @@ start_time = time.time()
 
 p = Pipe() \
     .x(points) \
+    .connect(start_timer())\
     .y(target) \
+    .connect(stop_timer())\
     .split(5, cross()) \
         .connect(kmeans_ssl(clusters=3, neighbors=1)) \
     .merge('evaluation', average('evaluation')) \

@@ -9,10 +9,28 @@ print('cpu:', cpu_count)
 
 class Pipe:
 
-    def __init__(self, stack = None):
-        if not stack:
+    def __init__(self, pipe = None, new_stack = None):
+        if not pipe:
             stack = v(m())
+            dump = m()
+        else:
+            stack = pipe.stack
+            dump = pipe.dump
+
+        if new_stack:
+            stack = new_stack
+
         self.stack = stack
+        self.dump = dump
+
+    def attach(self, key, val):
+        self.dump = self.dump.set(key, val)
+        return self
+
+    def read(self, key):
+        if not key in self.dump:
+            raise Exception('no ' + key + ' in pipe\'s dump')
+        return self.dump[key]
 
     def split(self, count, map_fn = None):
         # map_fn(x, idx, total) -> map(x)
@@ -39,7 +57,7 @@ class Pipe:
 
         multiplied = multiplier(top, count)
         new_stack = self.stack.append(multiplied)
-        return Pipe(new_stack)
+        return Pipe(self, new_stack)
 
     def merge(self, key, reduce_fn):
         # reduce_fn(list of pipe instance) -> any
@@ -74,7 +92,7 @@ class Pipe:
                                    enumerate(second_top))))
         #print(new_top)
         new_stack = self.stack[:-2].append(new_top)
-        return Pipe(new_stack)
+        return Pipe(self, new_stack)
 
     '''
     traverse, updatede to ues multi-core processors
@@ -117,7 +135,7 @@ class Pipe:
         else:
             new_stack = self._traverse(lambda x: x.set('x', input))
 
-        return Pipe(new_stack)
+        return Pipe(self, new_stack)
 
     '''
     assign onto 'y', input can be either value or function to be executed
@@ -128,12 +146,12 @@ class Pipe:
         else:
             new_stack = self._traverse(lambda x: x.set('y', input))
 
-        return Pipe(new_stack)
+        return Pipe(self, new_stack)
 
     def pipe(self, fn):
         # fn(instance) -> instance
         new_stack = self._traverse(fn)
-        return Pipe(new_stack)
+        return Pipe(self, new_stack)
 
     '''
     connect is for chaining an arbitrary function to the pipe (not mapping function)
