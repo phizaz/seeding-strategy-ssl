@@ -7,17 +7,17 @@ use this to attain a cross-validation
 def cross():
     shuffled = None
 
-    def fn(pipe, idx, total):
+    def fn(inst, idx, total):
         nonlocal shuffled
 
-        if not 'x' in pipe:
+        if not 'x' in inst:
             raise Exception('no x')
 
         # do the shuffling, making a better CV
         # do only once
         if not shuffled:
-            x = pipe['x']
-            y = pipe['y'] if 'y' in pipe else [None for each in x]
+            x = inst['x']
+            y = inst['y'] if 'y' in inst else [None for each in x]
             # print('x:', x)
             # print('y:', y)
             data = list(zip(x, y))
@@ -32,13 +32,21 @@ def cross():
         # print('idx:', idx)
         # print('start:', start)
         # print('size:', size)
-        segment = shuffled[:start] + shuffled[start + size:]
-        # print('segment size:', len(segment))
-        new_x = pvector(list(map(lambda x: x[0], segment)))
-        # print('new_x:', new_x)
-        new_y = pvector(list(map(lambda x: x[1], segment)))
-        # print('new_y:', new_y )
-        new_pipe = pipe.set('x', new_x).set('y', new_y)
-        return new_pipe
+        train = shuffled[:start] + shuffled[start + size:]
+        train_x, train_y = list(zip(*train))
+
+        test = shuffled[start: start + size]
+        test_x, test_y = list(zip(*test))
+
+        # print('test_x:', test_x)
+        # print('test_y:', test_y)
+
+        new_inst = inst\
+            .set('x', train_x)\
+            .set('y', train_y)\
+            .set('x_test', test_x)\
+            .set('y_test', test_y)
+
+        return new_inst
 
     return fn

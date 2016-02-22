@@ -47,7 +47,6 @@ class Pipe:
         if not map_fn:
             map_fn = default_map
 
-        top = self.stack[-1]
         def multiplier(l, cnt):
             if not isinstance(l, pvectorc.PVector):
                 return pvector(list(map(lambda x: map_fn(x[1], x[0], cnt),
@@ -55,8 +54,10 @@ class Pipe:
             else:
                 return pvector(list(map(lambda x: multiplier(x, cnt), l)))
 
+        top = self.stack[-1]
         multiplied = multiplier(top, count)
         new_stack = self.stack.append(multiplied)
+        # print('new_stack:', new_stack)
         return Pipe(self, new_stack)
 
     def merge(self, key, reduce_fn):
@@ -108,7 +109,10 @@ class Pipe:
                     result += tmp
                 return result
 
-        queue = probe(self.stack)
+        # print('stack:', self.stack)
+        top = self.stack[-1]
+        # print('top:', top)
+        queue = probe(top)
         # print('queue:', queue)
 
         result = parmap(fn, queue, cpu_count)
@@ -123,7 +127,7 @@ class Pipe:
             else:
                 return pvector(list(map(lambda x: run(x), l)))
 
-        new_stack = run(self.stack)
+        new_stack = self.stack[:-1].append(run(top))
         return new_stack
 
     '''

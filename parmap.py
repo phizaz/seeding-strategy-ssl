@@ -1,5 +1,6 @@
 import multiprocessing
 
+# parallel map
 # author: klaus se
 # url: http://stackoverflow.com/questions/3288595/multiprocessing-using-pool-map-on-a-function-defined-in-a-class
 

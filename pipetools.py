@@ -59,15 +59,15 @@ def evaluate():
     return fn
 
 def average(field):
-    def fn(inst):
+    def fn(insts):
         s = 0
         t = 0
-        for pipe in inst:
-            e = pipe[field]
+        for inst in insts:
+            e = inst[field]
             # print('eval:', e)
             s += e[0]
             t += e[1]
-        return s / len(inst), t / len(inst)
+        return s / len(insts), t / len(insts)
 
     return fn
 
