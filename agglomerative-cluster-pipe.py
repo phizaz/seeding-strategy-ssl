@@ -1,4 +1,3 @@
-import util
 from pipe import Pipe
 from wrapper import agglomerative
 from pipetools import dump, evaluate, load_x

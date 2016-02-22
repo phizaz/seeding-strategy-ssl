@@ -1,0 +1,12 @@
+from pipe import Pipe
+from wrapper import agglomerative_fast
+from pipetools import dump, evaluate, load_x, start_timer, stop_timer
+
+file = './datasets/pendigits/pendigits.tra'
+# file = './datasets/iris/iris.data'
+
+Pipe() \
+    .x(load_x(file, delimiter=',')) \
+    .connect(start_timer())\
+    .pipe(agglomerative_fast())\
+    .connect(stop_timer())
