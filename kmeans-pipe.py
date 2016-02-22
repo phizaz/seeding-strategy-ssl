@@ -1,4 +1,3 @@
-import util
 from pipe import Pipe
 from wrapper import kmeans
 from pipetools import predict, dump, load_x

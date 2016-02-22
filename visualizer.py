@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import util
 from matplotlib.ticker import NullFormatter
+from plottools import scatter2d
 
 file = './datasets/iris/iris.data'
 data = util.load_data(file)
@@ -48,12 +49,12 @@ rect_histy = [left_h, bottom, 0.2, height]
 plt.figure(1, figsize=(8, 8))
 
 axScatter = plt.axes(rect_scatter)
-axHistx = plt.axes(rect_histx)
-axHisty = plt.axes(rect_histy)
+# axHistx = plt.axes(rect_histx)
+# axHisty = plt.axes(rect_histy)
 
 # no labels
-axHistx.xaxis.set_major_formatter(nullfmt)
-axHisty.yaxis.set_major_formatter(nullfmt)
+# axHistx.xaxis.set_major_formatter(nullfmt)
+# axHisty.yaxis.set_major_formatter(nullfmt)
 
 # the scatter plot:
 axScatter.scatter(x, y)

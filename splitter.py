@@ -33,7 +33,7 @@ def cross():
         # print('start:', start)
         # print('size:', size)
         segment = shuffled[:start] + shuffled[start + size:]
-        print('segment size:', len(segment))
+        # print('segment size:', len(segment))
         new_x = pvector(list(map(lambda x: x[0], segment)))
         # print('new_x:', new_x)
         new_y = pvector(list(map(lambda x: x[1], segment)))

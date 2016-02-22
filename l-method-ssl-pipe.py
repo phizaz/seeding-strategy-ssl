@@ -1,5 +1,5 @@
 from pipe import Pipe
-from wrapper import kmeans, knn
+from wrapper import agglomerative_l_method, knn
 from pipetools import *
 from ssltools import *
 from splitter import cross
@@ -9,12 +9,11 @@ file = './datasets/pendigits/pendigits.tra'
 points = load_x(file, delimiter=',')
 target = load_y(file, delimiter=',')
 
-def kmeans_ssl(clusters, neighbors):
+def l_method(neighbors):
     def fn(pipe):
         p = pipe \
             .split(5) \
-                .pipe(kmeans(clusters)) \
-                .pipe(predict()) \
+                .pipe(agglomerative_l_method()) \
                 .pipe(copy('y', 'y_bak')) \
                 .y(random_select_y(0.1)) \
                 .y(label_consensus()) \
@@ -30,6 +29,6 @@ p = Pipe() \
     .x(points) \
     .y(target) \
     .connect(start_timer()) \
-    .connect(kmeans_ssl(clusters=26, neighbors=1)) \
+    .connect(l_method(neighbors=1)) \
     .connect(stop_timer()) \
     .pipe(dump('evaluation'))
