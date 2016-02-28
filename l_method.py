@@ -7,6 +7,11 @@ from itertools import islice
 import numpy
 import math
 
+class Result:
+    def __init__(self, labels, centers):
+        self.labels_ = labels
+        self.cluster_centers_ = centers
+
 def f_creator(coef, intercept):
     def f(x):
         return intercept + coef * x
@@ -34,11 +39,12 @@ def single_cluster(coef_a, coef_b, rthreshold=0.01):
     # print('coef_a:', coef_a, 'angle_a:', angle_a)
     # print('coef_b:', coef_b, 'angle_b:', angle_b)
     relative_difference = abs(angle_a - angle_b) / avg
-    print('relative_difference:', relative_difference)
+    # print('relative_difference:', relative_difference)
     return relative_difference <= rthreshold
 
 def l_method(num_groups, merge_dist):
     element_cnt = len(num_groups)
+    # print('element_cnt:', element_cnt)
 
     # short circuit, since the l-method doesn't work with the number of elements below 4
     if element_cnt < 4:
@@ -78,8 +84,8 @@ def l_method(num_groups, merge_dist):
         mseA = mean_squared_error(y_left, y_pred_left)
         mseB = mean_squared_error(y_right, y_pred_right)
 
-        print('mseA:', mseA)
-        print('mseB:', mseB)
+        # print('mseA:', mseA)
+        # print('mseB:', mseB)
         # end_time = time.time()
 
         A = left_cnt / element_cnt * mseA
@@ -92,14 +98,12 @@ def l_method(num_groups, merge_dist):
         x_right.popleft()
         y_right.popleft()
 
-        if A < B:
-            continue
-
-
         if score < min_score:
             # left_cnt is not the number of clusters
             # since the first num_group begins with 2
             min_c, min_score = left_cnt + 1, score
+            # print('c:', left_cnt + 1)
+            # print('score:', score)
             min_coef_left, min_coef_right = coef_left, coef_right
 
     # if min_coef_left == 0 and min_coef_right == 0:
@@ -108,7 +112,7 @@ def l_method(num_groups, merge_dist):
     #     print('num_groups:', num_groups)
     #     print('merge_dist:', merge_dist)
 
-    print('min_c:', min_c)
+    # print('min_c:', min_c)
 
     return min_c
 
@@ -141,9 +145,24 @@ def refined_l_method(num_groups, merge_dist):
             break
     return current_knee
 
+def get_centroids(X, belong_to):
+    clusters_cnt = max(belong_to) + 1
+    centroids = [None for i in range(clusters_cnt)]
+    cluster_member_cnt = [0 for i in range(clusters_cnt)]
+    for i, x in enumerate(X):
+        belongs = belong_to[i]
+        cluster_member_cnt[belongs] += 1
+        if centroids[belongs] is None:
+            centroids[belongs] = x
+        else:
+            centroids[belongs] += x
+    for i, centroid in enumerate(centroids):
+        centroids[i] = centroid / cluster_member_cnt[i]
+    return centroids
+
 def agglomerative_l_method(x):
-    print('agglomerative cnt:', len(x))
-    print('x:', x)
+    # print('agglomerative cnt:', len(x))
+    # print('x:', x)
     # library: fastcluster
     merge_hist = linkage(x, method='ward', metric='euclidean', preserve_input=True)
     # for each in merge_hist:
@@ -188,9 +207,13 @@ def agglomerative_l_method(x):
             cluster_map[each] = cluster_name
             cluster_name += 1
         belong_to_renamed.append(cluster_map[each])
+
     print('belong_to_renamed:', belong_to_renamed)
 
-    return belong_to_renamed
+    centroids = get_centroids(x, belong_to_renamed)
+    print('centroids:', centroids)
+
+    return Result(belong_to_renamed, centroids)
 
 def recursive_agglomerative_l_method(X):
     # won't give any disrable output for the moment

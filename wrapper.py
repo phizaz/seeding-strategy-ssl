@@ -4,17 +4,19 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 import l_method
 
-def kmeans(*args, **margs):
+def kmeans(n_clusters=8, n_init=10):
     def fn(inst):
         if not 'x' in inst:
             raise Exception('no x')
 
         x = inst['x']
 
-        kmeans = KMeans(*args, **margs)
+        kmeans = KMeans(n_clusters=n_clusters, n_init=n_init)
         kmeans.fit(x)
 
-        return inst.set('model', kmeans).set('prediction', kmeans.labels_)
+        return inst.set('model', kmeans)\
+            .set('prediction', kmeans.labels_)\
+            .set('centroids', kmeans.cluster_centers_)
 
     return fn
 
@@ -27,9 +29,6 @@ def knn(*args, **margs):
 
         x = inst['x']
         y = inst['y']
-
-        x_test = inst['x_test']
-        y_test = inst['x_test']
 
         # print('len x:', len(x))
         # print('len y:', len(y))
@@ -81,8 +80,9 @@ def agglomerative_l_method():
             raise Exception('no x')
 
         x = inst['x']
-        clusters = l_method.agglomerative_l_method(x)
-        return inst.set('prediction', clusters)
+        model = l_method.agglomerative_l_method(x)
+        return inst.set('prediction', model.labels_)\
+            .set('centroids', model.cluster_centers_)
 
     return fn
 

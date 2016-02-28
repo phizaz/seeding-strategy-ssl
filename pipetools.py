@@ -1,5 +1,6 @@
 import util
 import time
+from pyrsistent import pvector, v
 
 def load_x(file_path, delimiter = ',', remove_label = lambda x: x[:-1]):
     dataset = util.load_data(file_path, delimiter=',')
@@ -102,4 +103,14 @@ def stop_timer():
         end_time = time.time()
         print('time elapsed:', end_time - start_time)
         return pipe.attach('end_time', end_time)
+    return fn
+
+def stop():
+    # get result left from the pipe and stop it
+    def fn(pipe):
+        if len(pipe.stack) > 1:
+            raise Exception('trying to stop many pipes at the same time')
+
+        # no more pipe
+        return pipe.stack[0]
     return fn

@@ -29,7 +29,7 @@ class Pipe:
 
     def read(self, key):
         if not key in self.dump:
-            raise Exception('no ' + key + ' in pipe\'s dump')
+            return None
         return self.dump[key]
 
     def split(self, count, map_fn = None):
