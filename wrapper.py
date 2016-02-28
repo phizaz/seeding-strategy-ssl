@@ -24,13 +24,12 @@ def knn(*args, **margs):
             raise Exception('no x')
         if not 'y' in inst:
             raise Exception('no y')
-        # if not 'x_test' in inst:
-        #     raise Exception('no x_testt')
-        # if not 'y_test' in inst:
-        #     raise Exception('no y_testt')
 
         x = inst['x']
         y = inst['y']
+
+        x_test = inst['x_test']
+        y_test = inst['x_test']
 
         # print('len x:', len(x))
         # print('len y:', len(y))

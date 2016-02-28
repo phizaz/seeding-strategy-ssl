@@ -19,16 +19,13 @@ def predict():
     def fn(inst):
         if not 'model' in inst:
             raise Exception('no model')
-        if not 'x' in inst:
-            raise Exception('no x')
+        if not 'x_test' in inst:
+            raise Exception('no x_test')
 
-        x = inst['x']
+        x_test = inst['x_test']
         model = inst['model']
 
-        prediction = []
-        for point in x:
-            prediction_array = model.predict([point])
-            prediction.append(prediction_array[0])
+        prediction = model.predict(x_test)
 
         # print('prediction:', prediction)
 
@@ -40,18 +37,18 @@ def evaluate():
     def fn(inst):
         if not 'prediction' in inst:
             raise Exception('no prediction')
-        if not 'y' in inst:
-            raise Exception('no y')
+        if not 'y_test' in inst:
+            raise Exception('no y_test')
 
         prediction = inst['prediction']
-        y = inst['y']
+        y_test = inst['y_test']
 
-        if len(prediction) != len(y):
-            raise Exception('len y != prediction')
+        if len(prediction) != len(y_test):
+            raise Exception('len y_test != prediction')
 
         correct = 0
-        total = len(y)
-        for y, Y in zip(y, prediction):
+        total = len(y_test)
+        for y, Y in zip(y_test, prediction):
             correct += y == Y
 
         return inst.set('evaluation', (correct, total))
