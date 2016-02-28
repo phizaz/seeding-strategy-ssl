@@ -115,7 +115,11 @@ class Pipe:
         queue = probe(top)
         # print('queue:', queue)
 
+        # multicore parallel map
         result = parmap(fn, queue, cpu_count)
+        # singlecore map
+        # result = list(map(fn, queue))
+
         # print('result:', result)
         result_pt = 0
 

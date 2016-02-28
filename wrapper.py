@@ -1,6 +1,7 @@
 from sklearn.cluster import KMeans, AgglomerativeClustering
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier, KernelDensity
 from sklearn.linear_model import LinearRegression
+import numpy as np
 import l_method
 
 def kmeans(*args, **margs):
@@ -81,8 +82,35 @@ def agglomerative_l_method():
             raise Exception('no x')
 
         x = inst['x']
-
         clusters = l_method.agglomerative_l_method(x)
         return inst.set('prediction', clusters)
+
+    return fn
+
+def recursive_agglomerative_l_method():
+    def fn(inst):
+        if not 'x' in inst:
+            raise Exception('no x')
+
+        x = inst['x']
+        clusters = l_method.recursive_agglomerative_l_method(x)
+        return inst.set('prediction', clusters)
+
+    return fn
+
+def kernel_density_estimation(*args, **margs):
+    def fn(inst):
+        if not 'x' in inst:
+            raise Exception('no x')
+
+        x = inst['x']
+
+        kde = KernelDensity(*args, **margs)
+        kde.fit(x)
+
+        log_pdf = kde.score_samples(x)
+        pdf = np.exp(log_pdf)
+
+        return inst.set('model', kde).set('pdf', pdf)
 
     return fn

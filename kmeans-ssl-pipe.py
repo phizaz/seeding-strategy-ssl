@@ -4,6 +4,7 @@ from pipetools import *
 from ssltools import *
 from splitter import cross
 
+clusters_count = 3
 # file = './datasets/iris/iris.data'
 file = './datasets/pendigits/pendigits.tra'
 points = load_x(file, delimiter=',')
@@ -16,7 +17,7 @@ def kmeans_ssl(clusters, neighbors):
                 .pipe(kmeans(clusters)) \
                 .pipe(predict()) \
                 .pipe(copy('y', 'y_bak')) \
-                .y(random_select_y(0.1)) \
+                .y(seeding_random(0.1)) \
                 .y(label_consensus()) \
                 .pipe(knn(neighbors)) \
                 .pipe(predict()) \
@@ -30,6 +31,6 @@ p = Pipe() \
     .x(points) \
     .y(target) \
     .connect(start_timer()) \
-    .connect(kmeans_ssl(clusters=26, neighbors=1)) \
+    .connect(kmeans_ssl(clusters=clusters_count, neighbors=1)) \
     .connect(stop_timer()) \
     .pipe(dump('evaluation'))

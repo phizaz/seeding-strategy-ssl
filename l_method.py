@@ -1,9 +1,11 @@
 from fastcluster import linkage
 from disjoint import DisjointSet
 from collections import deque
+from sklearn.metrics import mean_squared_error
 import time
 from itertools import islice
 import numpy
+import math
 
 def f_creator(coef, intercept):
     def f(x):
@@ -11,39 +13,41 @@ def f_creator(coef, intercept):
 
     return f
 
-
 def best_fit_line(x, y):
-    # regression = LinearRegression()
-    # regression.fit(x, y)
-    # coef = regression.coef_[0]
-    # intercept = regression.intercept_
-
     coef, intercept = numpy.polyfit(x, y, 1)
     return coef, intercept
 
+def plot(X, fn):
+    return [fn(x) for x in X]
 
-def mean_squared_error(X, Y):
-    # start_time = time.time()
-    coef, intercept = best_fit_line(X, Y)
-    # end_time = time.time()
-    # print('best_fit time:', end_time - start_time)
+def single_cluster(coef_a, coef_b, rthreshold=0.01):
+    # this will fail if not counting the bigger picture as well!!
 
-    f = f_creator(coef, intercept)
-
-    sum = 0
-    for arr_x, real_y in zip(X, Y):
-        x = arr_x
-        y = f(x)
-        sum += (real_y - y) ** 2
-    mse = sum / len(Y)
-    return mse
-
+    # we use arctan instead of the slope
+    # because slopes don't act in a uniform way
+    # but radians do
+    angle_a = math.atan2(coef_a, 1)
+    angle_b = math.atan2(coef_b, 1)
+    # relative difference of the absolute mean of the two
+    avg = abs(angle_a + angle_b) / 2
+    # print('avg:', avg)
+    # print('coef_a:', coef_a, 'angle_a:', angle_a)
+    # print('coef_b:', coef_b, 'angle_b:', angle_b)
+    relative_difference = abs(angle_a - angle_b) / avg
+    print('relative_difference:', relative_difference)
+    return relative_difference <= rthreshold
 
 def l_method(num_groups, merge_dist):
+    element_cnt = len(num_groups)
+
+    # short circuit, since the l-method doesn't work with the number of elements below 4
+    if element_cnt < 4:
+        return 1
+
+    # now we have some leve of confidence that O(n) is not attainable
+    # this l_method is gonna be slow... n * 2 * O(MSE)
     # print(num_groups)
     # print(merge_dist)
-
-    b = len(num_groups) + 1
 
     # start_time = time.time()
     x_left = num_groups[:2]
@@ -56,45 +60,76 @@ def l_method(num_groups, merge_dist):
 
     min_score = float('inf')
     min_c = None
-    for c in range(3, b - 2):
+    # this is for determining single cluster problem
+    min_coef_left = 0
+    min_coef_right = 0
+
+    for left_cnt in range(2, element_cnt - 2 + 1):
         # start_time = time.time()
-        mseA = mean_squared_error(x_left, y_left)
-        mseB = mean_squared_error(x_right, y_right)
+        coef_left, intercept_left = best_fit_line(x_left, y_left)
+        coef_right, intercept_right = best_fit_line(x_right, y_right)
+
+        fn_left = f_creator(coef_left, intercept_left)
+        fn_right = f_creator(coef_right, intercept_right)
+
+        y_pred_left = plot(x_left, fn_left)
+        y_pred_right = plot(x_right, fn_right)
+
+        mseA = mean_squared_error(y_left, y_pred_left)
+        mseB = mean_squared_error(y_right, y_pred_right)
+
+        print('mseA:', mseA)
+        print('mseB:', mseB)
         # end_time = time.time()
 
-        # if c % 13 == 0:
-        #     print('c:', c)
-        #     print('mean_squared_time:', end_time - start_time)
-        A = (c - 1) / (b - 1) * mseA
-        B = (b - c) / (b - 1) * mseB
+        A = left_cnt / element_cnt * mseA
+        B = (element_cnt - left_cnt) / element_cnt * mseB
         score = A + B
 
-        if score < min_score:
-            # print('score:', score)
-            # print('c:', c)
-            # print('A:', A)
-            # print('B:', B)
-            # print('mseA:', mseA)
-            # print('mseB:', mseB)
-            min_c, min_score = c, score
-
-        # start_time = time.time()
-        x_left.append(num_groups[c - 1])
-        y_left.append(merge_dist[c - 1])
+        x_left.append(num_groups[left_cnt])
+        y_left.append(merge_dist[left_cnt])
 
         x_right.popleft()
         y_right.popleft()
-        # end_time = time.time()
-        # print('list manipulation time:', end_time - start_time)
+
+        if A < B:
+            continue
+
+
+        if score < min_score:
+            # left_cnt is not the number of clusters
+            # since the first num_group begins with 2
+            min_c, min_score = left_cnt + 1, score
+            min_coef_left, min_coef_right = coef_left, coef_right
+
+    # if min_coef_left == 0 and min_coef_right == 0:
+    #     print('zero !!')
+    #     print('c:', min_c)
+    #     print('num_groups:', num_groups)
+    #     print('merge_dist:', merge_dist)
+
+    print('min_c:', min_c)
 
     return min_c
 
+    # this won't work for the moment
+    # if single_cluster(min_coef_left, min_coef_right, 0.01):
+    #     # two lines are too close in slope to each other (1% tolerance)
+    #     # considered to be a single line
+    #     # thus, single cluster
+    #     return 1
+    # else:
+    #     return min_c
 
 def refined_l_method(num_groups, merge_dist):
-    cutoff = last_knee = current_knee = len(num_groups)
+    element_cnt = cutoff = last_knee = current_knee = len(num_groups)
+    # short circuit, since the l-method doesn't work with the number of elements below 4
+    if element_cnt < 4:
+        return 1
+
     while True:
         last_knee = current_knee
-        print('cutoff:', cutoff)
+        # print('cutoff:', cutoff)
         current_knee = l_method(num_groups[:cutoff], merge_dist[:cutoff])
         print('current_knee:', current_knee)
         # this actually modified from original version *2 -> *3
@@ -106,8 +141,9 @@ def refined_l_method(num_groups, merge_dist):
             break
     return current_knee
 
-
 def agglomerative_l_method(x):
+    print('agglomerative cnt:', len(x))
+    print('x:', x)
     # library: fastcluster
     merge_hist = linkage(x, method='ward', metric='euclidean', preserve_input=True)
     # for each in merge_hist:
@@ -126,13 +162,12 @@ def agglomerative_l_method(x):
     # print(num_groups)
     # print(merge_dist)
 
-    start_time = time.time()
+    # start_time = time.time()
     cluster_count = refined_l_method(num_groups, merge_dist)
-    end_time = time.time()
+    # end_time = time.time()
 
-    print('refined_l_method time:', end_time - start_time)
-
-    print('cluster_count:', cluster_count)
+    # print('refined_l_method time:', end_time - start_time)
+    # print('cluster_count:', cluster_count)
 
     # make clusters by merging them according to merge_hist
     disjoint = DisjointSet(len(x))
@@ -153,6 +188,38 @@ def agglomerative_l_method(x):
             cluster_map[each] = cluster_name
             cluster_name += 1
         belong_to_renamed.append(cluster_map[each])
-    # print('belong_to_renamed:', belong_to_renamed)
+    print('belong_to_renamed:', belong_to_renamed)
 
     return belong_to_renamed
+
+def recursive_agglomerative_l_method(X):
+    # won't give any disrable output for the moment
+
+    def recursion(X):
+        belong_to = agglomerative_l_method(X)
+        num_clusters = max(belong_to) + 1
+
+        if num_clusters == 1:
+            return belong_to, num_clusters
+
+        new_belong_to = [None for i in range(len(belong_to))]
+        next_cluster_name = 0
+        for cluster in range(num_clusters):
+            next_X = []
+            for belong, x in zip(belong_to, X):
+                if belong == cluster:
+                    next_X.append(x)
+            sub_belong, sub_num_clusters = recursion(next_X)
+            sub_belong_itr = 0
+            for i, belong in enumerate(belong_to):
+                if belong == cluster:
+                    new_belong_to[i] = sub_belong[sub_belong_itr] + next_cluster_name
+                    sub_belong_itr += 1
+            next_cluster_name += sub_num_clusters
+        return new_belong_to, next_cluster_name
+
+    belong_to, clusters = recursion(X)
+    print('belong_to:', belong_to)
+    print('clusters:', clusters)
+    return belong_to
+
