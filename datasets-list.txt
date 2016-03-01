@@ -1,5 +1,13 @@
-https://archive.ics.uci.edu/ml/machine-learning-databases/iris/
-https://archive.ics.uci.edu/ml/machine-learning-databases/yeast/
-https://archive.ics.uci.edu/ml/machine-learning-databases/letter-recognition/
-https://archive.ics.uci.edu/ml/machine-learning-databases/pendigits/
-https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/satimage/
+iris https://archive.ics.uci.edu/ml/machine-learning-databases/iris/
+yeast https://archive.ics.uci.edu/ml/machine-learning-databases/yeast/
+letter https://archive.ics.uci.edu/ml/machine-learning-databases/letter-recognition/
+pendigits https://archive.ics.uci.edu/ml/machine-learning-databases/pendigits/
+satimage https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/satimage/
+adult https://archive.ics.uci.edu/ml/machine-learning-databases/adult/
+banknote https://archive.ics.uci.edu/ml/machine-learning-databases/00267/
+eeg https://archive.ics.uci.edu/ml/machine-learning-databases/00264/
+bankmarket http://mlr.cs.umass.edu/ml/machine-learning-databases/00222/
+magic https://archive.ics.uci.edu/ml/machine-learning-databases/magic/
+spam https://archive.ics.uci.edu/ml/machine-learning-databases/spambase/
+mushroom https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/
+

@@ -9,6 +9,7 @@ from collections import Counter
 from itertools import chain
 from operator import itemgetter
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.cross_validation import cross_val_score
 
 
 def load_data(file, delimiter=','):
@@ -111,38 +112,28 @@ def good_K_for_KNN_with_testdata(X, Y, X_test, Y_test):
     return best_k, best_acc
 
 
-def goodKforKNN(data, label, weights = 'uniform'):
-    search_range = filter(lambda x: x % 2,
-                          range(1, int(len(data) ** 0.5) + 1))
-
+def good_K_for_KNN(X, Y):
     accuracies = []
-    worse_count = 0
-    worse_threshold = 15
-    for k in search_range:
-        print('testing k:', k)
-        knn = sklearn.neighbors.KNeighborsClassifier(n_neighbors=k,
-                                                     weights=weights)
-        scores = sklearn.cross_validation.cross_val_score(knn,
-                                                          data,
-                                                          label,
-                                                          cv = 5,
-                                                          n_jobs = 2)
-        accuracy = scores.mean()
-        print('acc:', accuracy)
+    descending_cnt = 0
+    descending_threshold = 15
 
-        if len(accuracies) > 0 and accuracy < accuracies[-1][1]:
-            worse_count += 1
-        else:
-            worse_count = 0
+    for k in range(1, len(X) + 1):
+        # print('k:', k)
+        knn = KNeighborsClassifier(n_neighbors=k)
+        scores = cross_val_score(knn, X, Y, cv=5, n_jobs=2)
+        score = scores.mean()
+        # print('acc:', score)
+        accuracies.append((k, score))
+        if k > 1:
+            current_acc = score
+            _, before_acc = accuracies[-2]
+            descending_cnt += current_acc <= before_acc
 
-        accuracies.append((k, accuracy))
+            if descending_cnt >= descending_threshold:
+                break
 
-        if worse_count >= worse_threshold:
-            break
-
-    best_k, accuracy = max(accuracies, key=itemgetter(1))
-
-    return best_k, accuracy
+    best_k, best_acc = max(accuracies, key=itemgetter(1))
+    return best_k, best_acc
 
 def requires(list, dict):
     result = []
