@@ -13,18 +13,21 @@ from sklearn.cross_validation import cross_val_score
 
 
 def load_data(file, delimiter=','):
-    with open(file, newline='') as csvfile:
-        spamreader = csv.reader(csvfile, delimiter=delimiter, quotechar='|')
+    result = []
+    for line in open(file):
+        line = line.strip()
+        if len(line) == 0:
+            continue
 
-        result = []
-        for row in spamreader:
-            if len(row) > 0:
-                result.append(row)
-        return result
+        row = line.split(delimiter)
+        row = list(filter(lambda x: len(x) > 0, row))
+        result.append(row)
+
+    # print('result:', result)
+    return result
 
 def to_number(data):
-    return map(lambda row: map(lambda col: float(col),
-                               row),
+    return map(lambda row: map(float, row),
                data)
 
 def rescale(data):

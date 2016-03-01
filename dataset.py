@@ -97,7 +97,7 @@ def get_satimage():
     file = './datasets/satimage/sat.trn'
     file_test = './datasets/satimage/sat.tst'
     _load_x = partial(load_x, delimiter=' ', remove_label=lambda row: row[:-1])
-    _load_y = partial(load_y, delimiter=' ', remove_label=lambda row: row[-1])
+    _load_y = partial(load_y, delimiter=' ', get_label=lambda row: row[-1])
     return Dataset(
         'satimage',
         _load_x(file),
