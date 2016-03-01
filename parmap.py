@@ -17,7 +17,8 @@ def parmap(f, X, nprocs = multiprocessing.cpu_count()):
 
     proc = [multiprocessing.Process(target=fun,args=(f,q_in,q_out)) for _ in range(nprocs)]
     for p in proc:
-        p.daemon = True
+        # daemonic process won't allow spawn more processes
+        p.daemon = False
         p.start()
 
     sent = [q_in.put((i,x)) for i,x in enumerate(X)]
