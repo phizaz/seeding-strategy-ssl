@@ -1,10 +1,8 @@
 import pvectorc
 from parmap import parmap
 from pyrsistent import pmap, pvector, v, m
-
 # cpu_count = multiprocessing.cpu_count()
 cpu_count = 2
-
 print('cpu:', cpu_count)
 
 class Pipe:
@@ -96,7 +94,8 @@ class Pipe:
         return Pipe(self, new_stack)
 
     '''
-    traverse, updatede to ues multi-core processors
+    traverse, updated to use multi-core processors
+    note: there's a problem now; cannot plot; cannot do nested _traverse
     '''
     def _traverse(self, fn):
         def probe(l):
@@ -179,6 +178,10 @@ class Pipe:
 
         return Pipe(self, new_stack)
 
+    '''
+    apply a fn to every instance of the pipe (top level) and return and new pipe
+    used to chain between mapping function
+    '''
     def pipe(self, fn):
         # fn(instance) -> instance
         new_stack = self._traverse(fn)

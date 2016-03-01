@@ -3,10 +3,12 @@ import csv
 import sklearn.neighbors
 
 import numpy
+import numpy as np
 import random
 from collections import Counter
 from itertools import chain
 from operator import itemgetter
+from sklearn.neighbors import KNeighborsClassifier
 
 
 def load_data(file, delimiter=','):
@@ -69,9 +71,9 @@ def random_list(n):
             l[i], l[rand] = l[rand], l[i]
     return l
 
-# generate array with a given size (r) containig random members in range (0, n - 1)
-def seed_numbers(n, r):
-    return random_list(n)[:r]
+    # generate array with a given size (r) containig random members in range (0, n - 1)
+    def seed_numbers(n, r):
+        return random_list(n)[:r]
 
 # given an array find the most common
 # if it has mnay most_commons return randomly amongst them
@@ -83,6 +85,31 @@ def most_common(cluster):
                                count))
     result = most_commons[random.randint(0, len(most_commons) - 1)]
     return result
+
+def good_K_for_KNN_with_testdata(X, Y, X_test, Y_test):
+    accuracies = []
+    descending_cnt = 0
+    descending_threshold = 15
+
+    for k in range(1, len(X) + 1):
+        # print('k:', k)
+        knn = KNeighborsClassifier(n_neighbors=k)
+        knn.fit(X, Y)
+        Y_pred = knn.predict(X_test)
+        score = sum(np.array_equal(a, b) for a, b in zip(Y_pred, Y_test))
+        # print('acc:', score)
+        accuracies.append((k, score))
+        if k > 1:
+            current_acc = score
+            _, before_acc = accuracies[-2]
+            descending_cnt += current_acc <= before_acc
+
+            if descending_cnt >= descending_threshold:
+                break
+
+    best_k, best_acc = max(accuracies, key=itemgetter(1))
+    return best_k, best_acc
+
 
 def goodKforKNN(data, label, weights = 'uniform'):
     search_range = filter(lambda x: x % 2,
@@ -116,3 +143,12 @@ def goodKforKNN(data, label, weights = 'uniform'):
     best_k, accuracy = max(accuracies, key=itemgetter(1))
 
     return best_k, accuracy
+
+def requires(list, dict):
+    result = []
+    for field in list:
+        if field not in dict:
+            raise Exception('no ' + field)
+        result.append(dict[field])
+
+    return result

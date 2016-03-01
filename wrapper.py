@@ -3,6 +3,10 @@ from sklearn.neighbors import KNeighborsClassifier, KernelDensity
 from sklearn.linear_model import LinearRegression
 import numpy as np
 import l_method
+from goodness import *
+from pipe import Pipe
+from pipetools import *
+from util import *
 
 def kmeans(n_clusters=8, n_init=10):
     def fn(inst):
@@ -112,4 +116,53 @@ def kernel_density_estimation(*args, **margs):
 
         return inst.set('model', kde).set('pdf', pdf)
 
+    return fn
+
+def badness():
+    def fn(inst):
+        if not 'x' in inst:
+            raise Exception('no x')
+        if not 'y' in inst:
+            raise Exception('no y')
+
+        x = inst['x']
+        y = inst['y']
+
+        # build seeding list
+        seeding = []
+        for i, each in enumerate(y):
+            if each is None:
+                continue
+            seeding.append(x[i])
+
+        if len(seeding) == len(x):
+            raise Exception('you probably seed with 100%')
+
+        # get the 'good' centroids
+        result = Pipe()\
+            .x(x)\
+            .y(y)\
+            .pipe(agglomerative_l_method())\
+            .connect(stop())
+
+        if not 'centroids' in result:
+            raise Exception('no centroids in pipe')
+
+        centroids = result['centroids']
+        bad = {
+            'rmsd': rmsd_nearest_from_centroids(seeding, centroids),
+            'md': md_nearest_from_centroids(seeding, centroids),
+        }
+        return inst.set('badness', bad)
+
+    return fn
+
+def goodK():
+    def fn(inst):
+        x, y, x_test, y_test = \
+            requires(['x', 'y', 'x_test', 'y_test'], inst)
+
+        goodK = good_K_for_KNN_with_testdata(x, y, x_test, y_test)
+        return inst.set('goodK', goodK)
+    
     return fn

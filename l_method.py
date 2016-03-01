@@ -208,10 +208,10 @@ def agglomerative_l_method(x):
             cluster_name += 1
         belong_to_renamed.append(cluster_map[each])
 
-    print('belong_to_renamed:', belong_to_renamed)
+    # print('belong_to_renamed:', belong_to_renamed)
 
     centroids = get_centroids(x, belong_to_renamed)
-    print('centroids:', centroids)
+    # print('centroids:', centroids)
 
     return Result(belong_to_renamed, centroids)
 
@@ -242,7 +242,9 @@ def recursive_agglomerative_l_method(X):
         return new_belong_to, next_cluster_name
 
     belong_to, clusters = recursion(X)
-    print('belong_to:', belong_to)
-    print('clusters:', clusters)
-    return belong_to
+    # print('belong_to:', belong_to)
+    # print('clusters:', clusters)
+    centroids = get_centroids(X, belong_to)
+    # print('centroids:', centroids)
+    return Result(belong_to, centroids)
 
