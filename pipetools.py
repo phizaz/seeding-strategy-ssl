@@ -69,6 +69,19 @@ def average(field):
 
     return fn
 
+def total(field):
+    def fn(insts):
+        s = 0
+        t = 0
+        for inst in insts:
+            e = inst[field]
+            # print('eval:', e)
+            s += e[0]
+            t += e[1]
+        return s, t
+
+    return fn
+
 def group(*fields):
     def fn(insts):
         storage = {}
