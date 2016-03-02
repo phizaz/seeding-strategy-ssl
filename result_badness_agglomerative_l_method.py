@@ -60,7 +60,7 @@ def cv(data):
             .pipe(badness_agglomeratvie_l_method()) \
             .split(10, cross('y_seed')) \
                 .connect(kmeans_ssl(cluster_cnt, data.K_for_KNN)) \
-            .merge('evaluation', average('evaluation')) \
+            .merge('evaluation', total('evaluation')) \
         .merge('result', group('evaluation', 'badness')) \
         .connect(stop())
 

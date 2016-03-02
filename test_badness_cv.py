@@ -6,9 +6,9 @@ from dataset import *
 from splitter import *
 import json
 
-data = get_iris()
 # data = get_pendigits()
-clusters_count = data.cluster_cnt
+data = get_iris()
+clusters_count = data.cluster_cnt * 3
 
 def kmeans_ssl(clusters, neighbors):
     def fn(pipe):
@@ -25,12 +25,12 @@ p = Pipe() \
     .x(data.X) \
     .y(data.Y) \
     .pipe(badness_agglomeratvie_l_method(prepare=True)) \
-    .split(3) \
+    .split(5) \
         .y_seed(seeding_random(0.1)) \
         .pipe(badness_agglomeratvie_l_method()) \
         .split(10, cross('y_seed'))\
             .connect(kmeans_ssl(clusters_count, data.K_for_KNN)) \
-        .merge('evaluation', average('evaluation'))\
+        .merge('evaluation', total('evaluation'))\
     .merge('result', group('evaluation', 'badness')) \
     .connect(stop())
 

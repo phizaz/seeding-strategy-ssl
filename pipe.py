@@ -1,8 +1,10 @@
 import pvectorc
 from parmap import parmap
 from pyrsistent import pmap, pvector, v, m
-# cpu_count = multiprocessing.cpu_count()
-cpu_count = 2
+import multiprocessing
+
+cpu_count = multiprocessing.cpu_count()
+# cpu_count = 2
 print('cpu:', cpu_count)
 
 class Pipe:
