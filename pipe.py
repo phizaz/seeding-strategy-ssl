@@ -167,14 +167,24 @@ class Pipe:
         return Pipe(self, new_stack)
 
     '''
-    assign onto 'y', input can be either value or function to be executed
+    assign onto 'y_test', input can be either value or function to be executed
     '''
-
     def y_test(self, input):
         if hasattr(input, '__call__'):
             new_stack = self._traverse(lambda x: x.set('y_test', input(x)))
         else:
             new_stack = self._traverse(lambda x: x.set('y_test', input))
+
+        return Pipe(self, new_stack)
+
+    '''
+    assign onto 'y_seed', input can be either value or function to be executed
+    '''
+    def y_seed(self, input):
+        if hasattr(input, '__call__'):
+            new_stack = self._traverse(lambda x: x.set('y_seed', input(x)))
+        else:
+            new_stack = self._traverse(lambda x: x.set('y_seed', input))
 
         return Pipe(self, new_stack)
 

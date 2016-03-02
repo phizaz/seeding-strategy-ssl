@@ -15,7 +15,7 @@ goodK = Pipe()\
     .y(Y)\
     .x_test(X_test)\
     .y_test(Y_test)\
-    .pipe(goodK())\
+    .pipe(good_K_for_KNN())\
     .connect(stop())
 
-print('goodK:', goodK)
+print('goodK:', good_K_for_KNN)

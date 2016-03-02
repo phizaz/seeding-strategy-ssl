@@ -3,7 +3,7 @@ from sklearn.neighbors import KNeighborsClassifier, KernelDensity
 from sklearn.linear_model import LinearRegression
 import numpy as np
 import l_method
-from goodness import *
+from badness import *
 from pipe import Pipe
 from pipetools import *
 from util import *
@@ -118,19 +118,28 @@ def kernel_density_estimation(*args, **margs):
 
     return fn
 
-def badness():
-    def fn(inst):
-        if not 'x' in inst:
-            raise Exception('no x')
-        if not 'y' in inst:
-            raise Exception('no y')
+def badness_agglomeratvie_l_method(prepare=False):
+    def prepare_fn(inst):
+        # get good centroids
+        x, y = requires(['x', 'y'], inst)
 
-        x = inst['x']
-        y = inst['y']
+        # get the 'good' centroids
+        result = Pipe() \
+            .x(x) \
+            .y(y) \
+            .pipe(agglomerative_l_method()) \
+            .connect(stop())
+        if not 'centroids' in result:
+            raise Exception('no centroids in pipe')
+
+        return inst.set('good_centroids', result['centroids'])
+
+    def fn(inst):
+        x, y_seed, good_centroids = requires(['x', 'y_seed', 'good_centroids'], inst)
 
         # build seeding list
         seeding = []
-        for i, each in enumerate(y):
+        for i, each in enumerate(y_seed):
             if each is None:
                 continue
             seeding.append(x[i])
@@ -138,26 +147,19 @@ def badness():
         if len(seeding) == len(x):
             raise Exception('you probably seed with 100%')
 
-        # get the 'good' centroids
-        result = Pipe()\
-            .x(x)\
-            .y(y)\
-            .pipe(agglomerative_l_method())\
-            .connect(stop())
-
-        if not 'centroids' in result:
-            raise Exception('no centroids in pipe')
-
-        centroids = result['centroids']
-        bad = {
-            'rmsd': rmsd_nearest_from_centroids(seeding, centroids),
-            'md': md_nearest_from_centroids(seeding, centroids),
+        badness = {
+            'rmsd': rmsd_nearest_from_centroids(seeding, good_centroids),
+            'md': md_nearest_from_centroids(seeding, good_centroids),
         }
-        return inst.set('badness', bad)
+        return inst.set('badness', badness)
 
-    return fn
+    if prepare:
+        return prepare_fn
+    else:
+        return fn
 
-def goodK():
+def good_K_for_KNN():
+    # use Dataset class instead, it will do this automatically for you see dataset.py
     def fn(inst):
         x, y, x_test, y_test = \
             requires(['x', 'y', 'x_test', 'y_test'], inst)

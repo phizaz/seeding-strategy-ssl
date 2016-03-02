@@ -3,10 +3,11 @@ from wrapper import *
 from pipetools import *
 from ssltools import *
 from dataset import *
+from splitter import *
 import json
 
-# data = get_iris()
-data = get_pendigits()
+data = get_iris()
+# data = get_pendigits()
 clusters_count = data.cluster_cnt
 
 def kmeans_ssl(clusters, neighbors):
@@ -23,14 +24,14 @@ def kmeans_ssl(clusters, neighbors):
 p = Pipe() \
     .x(data.X) \
     .y(data.Y) \
-    .x_test(data.X_test) \
-    .y_test(data.Y_test) \
-    .pipe(badness_agglomeratvie_l_method(prepare=True))\
-    .split(3)\
-        .y(seeding_random(0.1)) \
+    .pipe(badness_agglomeratvie_l_method(prepare=True)) \
+    .split(3) \
+        .y_seed(seeding_random(0.1)) \
         .pipe(badness_agglomeratvie_l_method()) \
-        .connect(kmeans_ssl(clusters_count, data.K_for_KNN))\
-    .merge('result', group('evaluation', 'badness'))\
+        .split(10, cross('y_seed'))\
+            .connect(kmeans_ssl(clusters_count, data.K_for_KNN)) \
+        .merge('evaluation', average('evaluation'))\
+    .merge('result', group('evaluation', 'badness')) \
     .connect(stop())
 
 result = p['result']

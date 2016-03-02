@@ -28,12 +28,8 @@ print('working on eeg')
 eeg = get_eeg()
 print('eeg K:', eeg.K_for_KNN)
 
-print('working on bankmarket')
-bankmarket = get_bankmarket()
-print('bankmarket K:', bankmarket.K_for_KNN)
-
 print('working on magic')
-magic = get_bankmarket()
+magic = get_magic()
 print('magic K:', magic.K_for_KNN)
 
 print('working on spam')

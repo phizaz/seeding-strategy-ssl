@@ -1,19 +1,19 @@
-import util
 import time
-from pyrsistent import pvector, v
+from pyrsistent import pvector, v, m, pmap
+from util import *
 
 def load_x(file_path, delimiter = ',', remove_label = lambda x: x[:-1]):
-    dataset = util.load_data(file_path, delimiter=delimiter)
+    dataset = load_data(file_path, delimiter=delimiter)
     points = list(map(remove_label, dataset))
-    points = util.to_number(points)
-    points = util.to_list(points)
-    points = util.rescale(points)
+    points = to_number(points)
+    points = to_list(points)
+    points = rescale(points)
     return points
 
 def load_y(file_path, delimiter = ',', get_label = lambda x: x[-1]):
-    dataset = util.load_data(file_path, delimiter=delimiter)
+    dataset = load_data(file_path, delimiter=delimiter)
     points = map(get_label, dataset)
-    points = util.to_list(points)
+    points = to_list(points)
     return points
 
 def predict():
@@ -67,6 +67,24 @@ def average(field):
             t += e[1]
         return s / len(insts), t / len(insts)
 
+    return fn
+
+def group(*fields):
+    def fn(insts):
+        storage = {}
+
+        for field in fields:
+            storage[field] = []
+
+        for inst in insts:
+            vals = requires(fields, inst)
+
+            for idx, field in enumerate(fields):
+                storage[field].append(vals[idx])
+
+        print('storage:', storage)
+
+        return storage
     return fn
 
 def dump(key):

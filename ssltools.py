@@ -3,22 +3,18 @@ from random import shuffle, randint
 from pyrsistent import pvector
 from sklearn.cluster import KMeans
 from numpy import inner
+from util import *
 import itertools
 
 def label_consensus():
     def fn(inst):
-        if not 'prediction' in inst:
-            raise Exception('no prediction')
-        if not 'y' in inst:
-            raise Exception('no y')
+        prediction, y_seed = requires(['prediction', 'y_seed'], inst)
 
-        prediction = inst['prediction']
-        y = inst['y']
         # print('y:', y)
         # print('prediction:', prediction)
         group_labels = [None for each in range(max(prediction) + 1)]
         for i, g in enumerate(prediction):
-            label = y[i]
+            label = y_seed[i]
             if label:
                 if not group_labels[g]:
                     group_labels[g] = Counter()
@@ -26,7 +22,7 @@ def label_consensus():
         # print('group_labels:', group_labels)
         majority = list(map(lambda x: x.most_common(1)[0] if x else None, group_labels))
         # print('majority:', majority)
-        new_y = [None for i in range(len(y))]
+        new_y = [None for i in range(len(y_seed))]
         for i, g in enumerate(prediction):
             # majority comes in (label, freq) or None
             maj = majority[g]
