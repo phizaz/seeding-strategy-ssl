@@ -46,7 +46,7 @@ def get_bandwidth(X, mode='cv'):
         params = {
             'bandwidth': np.linspace(0.01, 1.0, 300)
         }
-        grid = GridSearchCV(KernelDensity(), params, cv=20)
+        grid = GridSearchCV(KernelDensity(), params, cv=10, n_jobs=-1)
         grid.fit(X)
         print('best_params:', grid.best_params_)
         return grid.best_params_['bandwidth']
@@ -70,6 +70,13 @@ def create_hill_climber(X, rate=.01):
         size = inner(g, g) ** .5
         return x + rate * ( g / size )
 
+    def fast_climb(x):
+        # denclue 2.0 paper
+        s1 = sum(kernel((x - each_x) / bandwidth) * each_x for each_x in X)
+        s2 = sum(kernel((x - each_x) / bandwidth) for each_x in X)
+        return s1 / s2
+
+
     def climb_till_end(x):
         current = x
         current_dense = density(current)
@@ -77,7 +84,7 @@ def create_hill_climber(X, rate=.01):
         history.append(current)
         # print('start:', current)
         while True:
-            next = climb(current)
+            next = fast_climb(current)
             next_dense = density(next)
 
             history.append(next)
@@ -87,7 +94,7 @@ def create_hill_climber(X, rate=.01):
 
             current, current_dense = next, next_dense
 
-            if d < 0.05:
+            if d < 0.00001:
                 # density increament less than 0.1%
                 break
 

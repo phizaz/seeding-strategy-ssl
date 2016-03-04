@@ -13,36 +13,36 @@ climb = create_hill_climber(X, .001)
 x, y = list(zip(*X))
 plt.scatter(x, y, c='blue')
 
-space = np.linspace(0, 1, 5)
-points = cartesian((space, space))
+# space = np.linspace(0, 1, 10)
+# points = cartesian((space, space))
 
 histories = []
 
 def plot_each(each):
     print('plot:', each)
     summit, history = climb(each)
-    return history
+    return summit, history
 
 start_time = time.time()
 
 with ProcessPoolExecutor() as executor:
     # this pattern is important for using multiprocessing
     executors = []
-    for i, each in enumerate(points):
+    for i, each in enumerate(X):
         executors.append(executor.submit(plot_each, each))
 
+    summits = []
     for e in executors:
-        histories.append(e.result())
+        summit, history = e.result()
+        summits.append(summit)
+        path_x, path_y = list(zip(*history))
+        plt.scatter(path_x, path_y, c='red', edgecolors='none')
 
+    summit_x, summit_y = list(zip(*summits))
+    plt.scatter(summit_x, summit_y, c='green')
 
 end_time = time.time()
 
 print('time elapsed:', end_time - start_time)
-
-print('plotting..')
-
-for history in histories:
-    path_x, path_y = list(zip(*history))
-    plt.scatter(path_x, path_y, c='red', edgecolors='none')
 
 plt.show()
