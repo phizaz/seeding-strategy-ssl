@@ -19,7 +19,7 @@ datasets = [
     get_spam()
 ]
 
-random_cnt = 10
+random_cnt = 25
 
 def kmeans_ssl(clusters, neighbors):
     def fn(pipe):
@@ -42,7 +42,7 @@ def normal(data):
         .y_test(data.Y_test) \
         .pipe(badness_agglomeratvie_l_method(prepare=True)) \
         .split(random_cnt) \
-            .y(seeding_random(0.1)) \
+            .y_seed(seeding_random(0.1)) \
             .pipe(badness_agglomeratvie_l_method()) \
             .connect(kmeans_ssl(cluster_cnt, data.K_for_KNN)) \
         .merge('result', group('evaluation', 'badness')) \

@@ -6,8 +6,9 @@ from dataset import *
 from splitter import *
 import json
 
-# data = get_pendigits()
-data = get_iris()
+data = get_pendigits()
+# data = get_iris()
+# data = get_spam()
 clusters_count = data.cluster_cnt * 3
 
 def kmeans_ssl(clusters, neighbors):
@@ -38,5 +39,5 @@ result = p['result']
 
 print('result:', result)
 
-with open('results/badness_agglomerative_l_method-' + data.name + '.json', 'w') as file:
-    json.dump(result, file)
+# with open('results/badness_agglomerative_l_method-' + data.name + '.json', 'w') as file:
+#     json.dump(result, file)

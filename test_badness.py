@@ -27,7 +27,7 @@ p = Pipe() \
     .y_test(data.Y_test) \
     .pipe(badness_agglomeratvie_l_method(prepare=True))\
     .split(3)\
-        .y(seeding_random(0.1)) \
+        .y_seed(seeding_random(0.1)) \
         .pipe(badness_agglomeratvie_l_method()) \
         .connect(kmeans_ssl(clusters_count, data.K_for_KNN))\
     .merge('result', group('evaluation', 'badness'))\
