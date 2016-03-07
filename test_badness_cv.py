@@ -1,10 +1,9 @@
-from pipe import Pipe
-from wrapper import *
-from pipetools import *
-from ssltools import *
-from dataset import *
 from splitter import *
-import json
+
+from dataset import *
+from multipipetools import total, group
+from ssltools import *
+from wrapper import *
 
 data = get_pendigits()
 # data = get_iris()

@@ -4,11 +4,17 @@ from numpy import array
 import numpy as np
 from cartesian import cartesian
 from concurrent.futures import ProcessPoolExecutor
+from random import shuffle
 
-iris = get_iris()
 
-X = list(map(lambda x: x[:2], iris.X))
-climb = create_hill_climber(X, .001)
+dataset = get_iris()
+# dataset = get_pendigits()
+
+X = list(map(lambda x: x[:2], dataset.X))
+dataset.X = X
+
+climb = create_hill_climber(dataset, fast=True)
+#climb = create_hill_climber(dataset, fast=False)(rate=0.001)
 
 x, y = list(zip(*X))
 plt.scatter(x, y, c='blue')
@@ -26,9 +32,11 @@ def plot_each(each):
 start_time = time.time()
 
 with ProcessPoolExecutor() as executor:
+    X_rand = X[:]
+    shuffle(X_rand)
     # this pattern is important for using multiprocessing
     executors = []
-    for i, each in enumerate(X):
+    for i, each in enumerate(X_rand[:int(len(X) * 1)]):
         executors.append(executor.submit(plot_each, each))
 
     summits = []

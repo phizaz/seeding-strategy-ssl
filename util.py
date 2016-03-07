@@ -1,5 +1,7 @@
 import csv
 
+import collections
+
 import sklearn.neighbors
 
 import numpy
@@ -138,9 +140,14 @@ def good_K_for_KNN(X, Y):
     best_k, best_acc = max(accuracies, key=itemgetter(1))
     return best_k, best_acc
 
-def requires(list, dict):
+def requires(request, dict):
+    if isinstance(request, str):
+        if request not in dict:
+            raise Exception('no ' + request)
+        return dict[request]
+
     result = []
-    for field in list:
+    for field in request:
         if field not in dict:
             raise Exception('no ' + field)
         result.append(dict[field])

@@ -10,10 +10,7 @@ from util import *
 
 def kmeans(n_clusters=8, n_init=10):
     def fn(inst):
-        if not 'x' in inst:
-            raise Exception('no x')
-
-        x = inst['x']
+        x = requires('x', inst)
 
         kmeans = KMeans(n_clusters=n_clusters, n_init=n_init)
         kmeans.fit(x)
@@ -26,19 +23,15 @@ def kmeans(n_clusters=8, n_init=10):
 
 def knn(*args, **margs):
     def fn(inst):
-        if not 'x' in inst:
-            raise Exception('no x')
-        if not 'y' in inst:
-            raise Exception('no y')
+        x, y = requires(['x', 'y'], inst)
 
-        x = inst['x']
-        y = inst['y']
-
-        # print('len x:', len(x))
-        # print('len y:', len(y))
+        print('len x:', len(x))
+        print('len y:', len(y))
 
         knn = KNeighborsClassifier(*args, **margs)
         knn.fit(x, y)
+
+        print('knn x:', x)
 
         return inst.set('model', knn)
 
@@ -151,6 +144,9 @@ def badness_agglomeratvie_l_method(prepare=False):
             'rmsd': rmsd_nearest_from_centroids(seeding, good_centroids),
             'md': md_nearest_from_centroids(seeding, good_centroids),
         }
+
+        print('badness:', badness)
+
         return inst.set('badness', badness)
 
     if prepare:
