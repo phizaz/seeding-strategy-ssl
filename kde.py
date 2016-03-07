@@ -4,6 +4,8 @@ import math
 import matplotlib.pyplot as plt
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.grid_search import GridSearchCV
+import time
+from fast_climb_approx import create_fast_climb_kdtree
 
 def kernel(x):
     d = len(x)
@@ -23,7 +25,7 @@ def create_density_fn(X, bandwidth=.2, author='me'):
 
     elif author == 'scikit':
         # faster !
-        kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(X)
+        kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth, rtol=1e-6).fit(X)
         def scikit(x):
             return math.exp(kde.score([x]))
 
@@ -44,55 +46,99 @@ def get_bandwidth(X, mode='cv'):
     def cv_bandwidth(X):
         # exhaustive search
         params = {
-            'bandwidth': np.linspace(0.01, 1.0, 300)
+            'bandwidth': np.linspace(1e-4, 1.0, 1000)
         }
-        grid = GridSearchCV(KernelDensity(), params, cv=10, n_jobs=-1)
+        grid = GridSearchCV(
+                KernelDensity(rtol=1e-6),
+                params,
+                cv=10,
+                n_jobs=-1)
         grid.fit(X)
         print('best_params:', grid.best_params_)
         return grid.best_params_['bandwidth']
 
     return cv_bandwidth(X)
 
-def create_hill_climber(X, rate=.01):
-    bandwidth = get_bandwidth(X, mode='cv')
-    gradient = create_gradienter(X, bandwidth)
+def create_hill_climber(dataset, fast=True):
+    X = dataset.X
+    # bandwidth = get_bandwidth(X, mode='cv')
+    bandwidth = dataset.bandwidth
     density = create_density_fn(X, bandwidth, 'scikit')
 
     def diff(f, t):
+        # this is rather slower
         dif = f - t
         dist = inner(dif, dif) ** .5
         base = inner(f, f) ** .5
         return dist / base * 100
 
-    def climb(x):
-        g = gradient(x)
-        # print('gradient:', g)
-        size = inner(g, g) ** .5
-        return x + rate * ( g / size )
+    def normal_climber(rate=.01):
+        gradient = create_gradienter(X, bandwidth)
 
-    def fast_climb(x):
-        # denclue 2.0 paper
-        s1 = sum(kernel((x - each_x) / bandwidth) * each_x for each_x in X)
-        s2 = sum(kernel((x - each_x) / bandwidth) for each_x in X)
-        return s1 / s2
+        def climb(x):
+            g = gradient(x)
+            # print('gradient:', g)
+            size = inner(g, g) ** .5
+            return x + rate * (g / size)
 
+        def climb_till_end(x):
+            current = x
+            current_dense = density(current)
+            history = [current]
+            # print('start:', current)
+            while True:
+                next = climb(current)
 
-    def climb_till_end(x):
+                history.append(next)
+                # print('next:', next)
+
+                next_dense = density(next)
+                d = abs(next_dense - current_dense) / current_dense * 100
+                # d = diff(current, next)
+
+                current, current_dense = next, next_dense
+                # current = next
+
+                if d < 0.01:
+                    # density increament less than 0.1%
+                    break
+            return current, history
+
+        return climb_till_end
+
+    def fast_climb_till_end(x, approx=0.005):
+
+        if approx:
+            fast_climb = create_fast_climb_kdtree(X, kernel, approx)
+        else:
+            def fast_climb(x):
+                # denclue 2.0 paper
+                start_time = time.process_time()
+                computed_kernel = [kernel((x - each_x) / bandwidth) for each_x in X]
+                s1 = sum(each_kernel * each_x for each_kernel, each_x in zip(computed_kernel, X))
+                s2 = sum(computed_kernel)
+                end_time = time.process_time()
+                print('fast_climb:', end_time - start_time)
+                return s1 / s2
+
         current = x
         current_dense = density(current)
-        history = []
-        history.append(current)
-        # print('start:', current)
+        history = [current]
+
         while True:
             next = fast_climb(current)
-            next_dense = density(next)
-
             history.append(next)
             # print('next:', next)
 
+            # start_time = time.process_time()
+            next_dense = density(next)
             d = abs(next_dense - current_dense) / current_dense * 100
+            # d = diff(current, next)
+            # end_time = time.process_time()
+            # print('diff:', end_time - start_time)
 
             current, current_dense = next, next_dense
+            # current = next
 
             if d < 0.00001:
                 # density increament less than 0.1%
@@ -100,7 +146,11 @@ def create_hill_climber(X, rate=.01):
 
         return current, history
 
-    return climb_till_end
+
+    if fast:
+        return fast_climb_till_end
+    else:
+        return normal_climber
 
 
 
