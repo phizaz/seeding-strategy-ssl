@@ -10,10 +10,10 @@ from wrapper import *
 import numpy as np
 
 datasets = [
-    # get_iris(),
+    get_iris(),
     # get_yeast(),
     # get_letter(),
-    get_pendigits(),
+    # get_pendigits(),
     # get_satimage(),
     # get_banknote(),
     # get_eeg(),
@@ -36,8 +36,8 @@ def seeder(probs):
     def map_fn(inst, idx, total):
         seeding_fn = seeding_random(probs[idx])
         y_seed = seeding_fn(inst)
-        print('pipe no:', idx, 'prob:', probs[idx])
-        print('y_seed:', y_seed)
+        # print('pipe no:', idx, 'prob:', probs[idx])
+        # print('y_seed:', y_seed)
         return inst.set('y_seed', y_seed)
 
     return map_fn
@@ -64,12 +64,14 @@ def cv(data, probs):
         .x(data.X) \
         .y(data.Y) \
         .pipe(badness_agglomeratvie_l_method(prepare=True)) \
+        .pipe(badness_kde(data.bandwidth, prepare=True))\
         .split(len(probs), seeder(probs))\
             .pipe(badness_agglomeratvie_l_method()) \
+            .pipe(badness_kde())\
             .split(10, cross('y_seed')) \
                 .connect(kmeans_ssl(cluster_cnt, data.K_for_KNN)) \
             .merge('evaluation', total('evaluation')) \
-        .merge('result', group('evaluation', 'badness'))\
+        .merge('result', group('evaluation', 'badness', 'badness-kde'))\
         .connect(stop())
 
 def run_and_save(dataset):
@@ -81,14 +83,12 @@ def run_and_save(dataset):
     else:
         fn = cv
 
-    # result = fn(dataset, np.linspace(0.01, 0.2, 20))
-    result = fn(dataset, [0.2])
+    result = fn(dataset, np.linspace(0.01, 0.2, 20))
+    # result = fn(dataset, [0.2])
 
     with open('results/badness_agglomerative_l_method_on_seeding_prob-' + dataset.name + '.json', 'w') as file:
         json.dump(result['result'], file)
 
-run_and_save(datasets[0])
-
-# with ProcessPoolExecutor() as executor:
-#     for dataset in datasets:
-#         executor.submit(run_and_save, dataset)
+with ProcessPoolExecutor() as executor:
+    for dataset in datasets:
+        executor.submit(run_and_save, dataset)

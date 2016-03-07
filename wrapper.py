@@ -25,13 +25,13 @@ def knn(*args, **margs):
     def fn(inst):
         x, y = requires(['x', 'y'], inst)
 
-        print('len x:', len(x))
-        print('len y:', len(y))
+        # print('len x:', len(x))
+        # print('len y:', len(y))
 
         knn = KNeighborsClassifier(*args, **margs)
         knn.fit(x, y)
 
-        print('knn x:', x)
+        # print('knn x:', x)
 
         return inst.set('model', knn)
 
@@ -111,6 +111,41 @@ def kernel_density_estimation(*args, **margs):
 
     return fn
 
+def badness_denclue(prepare=False):
+    pass
+
+def badness_kde(bandwidth=None, prepare=False):
+
+    def prepare_fn(inst):
+        if not bandwidth:
+            raise Exception('no bandwidth given')
+
+        x = requires('x', inst)
+
+        kde = KernelDensity(rtol=1e-6, bandwidth=bandwidth, kernel='gaussian')
+        kde.fit(x)
+
+        return inst.set('kde', kde)
+
+    def fn(inst):
+        kde, y_seed, x = requires(['kde', 'y_seed', 'x'], inst)
+
+        # build seeding list
+        seeding = list(map(lambda x: x[0],
+                           filter(lambda a: a[1] is not None,
+                                  zip(x, y_seed))))
+        # print('seeding:', seeding)
+
+        log_pdf = kde.score_samples(seeding)
+        badness = sum(np.exp(log_pdf))
+
+        return inst.set('badness-kde', badness)
+
+    if prepare:
+        return prepare_fn
+    else:
+        return fn
+
 def badness_agglomeratvie_l_method(prepare=False):
     def prepare_fn(inst):
         # get good centroids
@@ -131,11 +166,9 @@ def badness_agglomeratvie_l_method(prepare=False):
         x, y_seed, good_centroids = requires(['x', 'y_seed', 'good_centroids'], inst)
 
         # build seeding list
-        seeding = []
-        for i, each in enumerate(y_seed):
-            if each is None:
-                continue
-            seeding.append(x[i])
+        seeding = list(map(lambda x: x[0],
+                           filter(lambda a: a[1] is not None,
+                                  zip(x, y_seed))))
 
         if len(seeding) == len(x):
             raise Exception('you probably seed with 100%')
@@ -145,7 +178,7 @@ def badness_agglomeratvie_l_method(prepare=False):
             'md': md_nearest_from_centroids(seeding, good_centroids),
         }
 
-        print('badness:', badness)
+        # print('badness:', badness)
 
         return inst.set('badness', badness)
 

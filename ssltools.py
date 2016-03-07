@@ -10,7 +10,7 @@ def label_consensus():
     def fn(inst):
         prediction, y_seed = requires(['prediction', 'y_seed'], inst)
 
-        print('y_seed:', y_seed)
+        # print('y_seed:', y_seed)
         # print('prediction:', prediction)
 
         # cnt = sum(each is not None for each in y_seed)
@@ -56,7 +56,7 @@ def label_consensus():
                         new_y[i] = v
                         break
 
-        print('new_y:', new_y)
+        # print('new_y:', new_y)
         return pvector(new_y)
 
     return fn
