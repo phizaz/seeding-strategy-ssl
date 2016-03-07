@@ -1,8 +1,8 @@
+from multipipetools import average
 from pipe import Pipe
-from wrapper import agglomerative_l_method, knn
 from pipetools import *
 from ssltools import *
-from splitter import cross
+from wrapper import agglomerative_l_method, knn
 
 file = './datasets/iris/iris.data'
 # file = './datasets/pendigits/pendigits.tra'

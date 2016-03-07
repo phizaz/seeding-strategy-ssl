@@ -1,6 +1,7 @@
 from pipe import Pipe
 from wrapper import knn
-from pipetools import predict, dump, load_x, load_y, copy, evaluate, average, echo
+from pipetools import predict, dump, load_x, load_y, copy, evaluate, echo
+from multipipetools import average
 from splitter import cross
 
 file = './datasets/iris/iris.data'

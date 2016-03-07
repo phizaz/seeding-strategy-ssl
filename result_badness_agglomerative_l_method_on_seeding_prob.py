@@ -1,9 +1,13 @@
+import traceback
 from concurrent.futures import ProcessPoolExecutor
+
+import sys
 
 from dataset import *
 from multipipetools import total, group, cross
 from ssltools import *
 from wrapper import *
+import numpy as np
 
 datasets = [
     # get_iris(),
@@ -17,9 +21,6 @@ datasets = [
     # get_spam()
 ]
 
-random_cnt = 25
-seeding_prob = 0.1
-
 def kmeans_ssl(clusters, neighbors):
     def fn(pipe):
         p = pipe \
@@ -31,7 +32,17 @@ def kmeans_ssl(clusters, neighbors):
         return p
     return fn
 
-def normal(data, prob):
+def seeder(probs):
+    def map_fn(inst, idx, total):
+        seeding_fn = seeding_random(probs[idx])
+        y_seed = seeding_fn(inst)
+        print('pipe no:', idx, 'prob:', probs[idx])
+        print('y_seed:', y_seed)
+        return inst.set('y_seed', y_seed)
+
+    return map_fn
+
+def normal(data, probs):
     cluster_cnt = data.cluster_cnt * 3
 
     return Pipe() \
@@ -40,40 +51,44 @@ def normal(data, prob):
         .x_test(data.X_test) \
         .y_test(data.Y_test) \
         .pipe(badness_agglomeratvie_l_method(prepare=True)) \
-        .split(random_cnt) \
-            .y_seed(seeding_random(prob)) \
+        .split(len(probs), seeder(probs))\
             .pipe(badness_agglomeratvie_l_method()) \
             .connect(kmeans_ssl(cluster_cnt, data.K_for_KNN)) \
-        .merge('result', group('evaluation', 'badness')) \
+        .merge('result', group('evaluation', 'badness'))\
         .connect(stop())
 
-def cv(data, prob):
+def cv(data, probs):
     cluster_cnt = data.cluster_cnt * 3
 
     return Pipe() \
         .x(data.X) \
         .y(data.Y) \
         .pipe(badness_agglomeratvie_l_method(prepare=True)) \
-        .split(random_cnt) \
-            .y_seed(seeding_random(prob)) \
+        .split(len(probs), seeder(probs))\
             .pipe(badness_agglomeratvie_l_method()) \
             .split(10, cross('y_seed')) \
                 .connect(kmeans_ssl(cluster_cnt, data.K_for_KNN)) \
             .merge('evaluation', total('evaluation')) \
-        .merge('result', group('evaluation', 'badness')) \
+        .merge('result', group('evaluation', 'badness'))\
         .connect(stop())
 
+def run_and_save(dataset):
+    print('dataset:', dataset.name)
+    print('has_testdata:', dataset.has_testdata())
 
-def run_and_save(dataset, prob):
     if dataset.has_testdata():
         fn = normal
     else:
         fn = cv
 
-    result = fn(dataset, prob)
-    with open('results/badness_agglomerative_l_method_prob-' + seeding_prob + '-' + dataset.name + '.json', 'w') as file:
+    # result = fn(dataset, np.linspace(0.01, 0.2, 20))
+    result = fn(dataset, [0.2])
+
+    with open('results/badness_agglomerative_l_method_on_seeding_prob-' + dataset.name + '.json', 'w') as file:
         json.dump(result['result'], file)
 
-with ProcessPoolExecutor() as executor:
-    for dataset in datasets:
-        executor.submit(run_and_save, dataset, seeding_prob)
+run_and_save(datasets[0])
+
+# with ProcessPoolExecutor() as executor:
+#     for dataset in datasets:
+#         executor.submit(run_and_save, dataset)

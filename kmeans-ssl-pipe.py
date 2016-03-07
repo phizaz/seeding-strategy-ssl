@@ -1,8 +1,8 @@
+from multipipetools import average
 from pipe import Pipe
-from wrapper import kmeans, knn
 from pipetools import *
 from ssltools import *
-from splitter import cross
+from wrapper import kmeans, knn
 
 clusters_count = 10
 # file = './datasets/iris/iris.data'
