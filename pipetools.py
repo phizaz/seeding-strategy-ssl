@@ -1,6 +1,7 @@
 import time
-from pyrsistent import pvector, v, m, pmap
+
 from util import *
+
 
 def load_x(file_path, delimiter = ',', remove_label = lambda x: x[:-1]):
     dataset = load_data(file_path, delimiter=delimiter)
@@ -56,49 +57,6 @@ def evaluate():
 
     return fn
 
-def average(field):
-    def fn(insts):
-        s = 0
-        t = 0
-        for inst in insts:
-            e = inst[field]
-            # print('eval:', e)
-            s += e[0]
-            t += e[1]
-        return s / len(insts), t / len(insts)
-
-    return fn
-
-def total(field):
-    def fn(insts):
-        s = 0
-        t = 0
-        for inst in insts:
-            e = inst[field]
-            # print('eval:', e)
-            s += e[0]
-            t += e[1]
-        return s, t
-
-    return fn
-
-def group(*fields):
-    def fn(insts):
-        storage = {}
-
-        for field in fields:
-            storage[field] = []
-
-        for inst in insts:
-            vals = requires(fields, inst)
-
-            for idx, field in enumerate(fields):
-                storage[field].append(vals[idx])
-
-        print('storage:', storage)
-
-        return storage
-    return fn
 
 def dump(key):
     def fn(inst):
