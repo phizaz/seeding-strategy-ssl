@@ -1,7 +1,6 @@
 from numpy import inner
 import numpy as np
 import math
-import matplotlib.pyplot as plt
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.grid_search import GridSearchCV
 import time
