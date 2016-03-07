@@ -10,8 +10,20 @@ def label_consensus():
     def fn(inst):
         prediction, y_seed = requires(['prediction', 'y_seed'], inst)
 
-        # print('y:', y)
+        print('y_seed:', y_seed)
         # print('prediction:', prediction)
+
+        # cnt = sum(each is not None for each in y_seed)
+        # print('cnt:', cnt)
+
+        if all(each is None for each in y_seed):
+            # no labels at all just random one label from the Y
+            y = requires('y', inst)
+            label = y[randint(0, len(y) - 1)]
+            new_y = [label for each in y]
+            # print('new_y:', new_y)
+            return pvector(new_y)
+
         group_labels = [None for each in range(max(prediction) + 1)]
         for i, g in enumerate(prediction):
             label = y_seed[i]
@@ -30,6 +42,7 @@ def label_consensus():
                 # if there is a majority
                 # take only the first part
                 new_y[i] = maj[0]
+
         # randomly fill the rest (None)
         for i, each in enumerate(new_y):
             if not each:
@@ -42,11 +55,14 @@ def label_consensus():
                     if v:
                         new_y[i] = v
                         break
+
+        print('new_y:', new_y)
         return pvector(new_y)
 
     return fn
 
 def seeding_random(prob):
+    # total random seeding
     def fn(inst):
         if not 'y' in inst:
             raise Exception('no y')
@@ -64,7 +80,8 @@ def seeding_random(prob):
     return fn
 
 def seeding_centroids(prob):
-
+    # cluster the data into number of seeding instances
+    # and put one seed in each of them
     def fn(inst):
         if not 'y' in inst:
             raise Exception('no y')
@@ -109,6 +126,7 @@ def seeding_centroids(prob):
     return fn
 
 def seeding_equally(prob):
+    # seeding by putting equally number of seeds into every cluster
     # this will work on natural clusters
     def fn(inst):
         if not 'x' in inst:
@@ -155,5 +173,54 @@ def seeding_equally(prob):
         # print('new_y:', new_y)
 
         return pvector(new_y)
+
+    return fn
+
+def seeding_some(prob, cluster_cnt):
+    # seeding only in some clusters defined by cluster_cnt (equally)
+    def fn(inst):
+        X, Y = requires(['x', 'y'], inst)
+
+        seeding_cnt = int(len(Y) * prob)
+
+        labels = set()
+        for label in Y:
+            labels.add(label)
+        seeding_labels = list(labels)
+        shuffle(seeding_labels)
+        seeding_labels = seeding_labels[:cluster_cnt]
+        seeding_labels = set(seeding_labels)
+
+        seeding_per_cluster = int(seeding_cnt / cluster_cnt)
+
+        # group points in the same cluster into the same array, with index
+        map_cluster_idx = {}
+        for name in seeding_labels:
+            map_cluster_idx[name] = []
+        for idx, cluster in enumerate(Y):
+            if cluster in seeding_labels:
+                map_cluster_idx[cluster].append(idx)
+
+        # select seending from each cluster
+        new_y = [None for i in range(len(Y))]
+        cluster_no = 0
+        seeding_selected = 0
+        for cluster, points in map_cluster_idx.items():
+            shuffle(points)
+
+            if cluster_no == cluster_cnt - 1:
+                # last cluster select the rest
+                selecting_cnt = seeding_cnt - seeding_selected
+            else:
+                selecting_cnt = seeding_per_cluster
+
+            seeding_selected += selecting_cnt
+
+            for selected in itertools.islice(points, selecting_cnt):
+                # print('selected:', selected)
+                # print('selected:', y[selected])
+                new_y[selected] = Y[selected]
+
+        return new_y
 
     return fn
