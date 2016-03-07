@@ -5,6 +5,7 @@ from functools import partial
 from collections import Counter
 import os
 import json
+from kde import get_bandwidth
 
 class Dataset:
     def __init__(self, dataset_name, X, Y, X_test=None, Y_test=None):
@@ -15,6 +16,7 @@ class Dataset:
         self.Y_test = Y_test
         self.cluster_cnt = self.count_cluster()
         self.K_for_KNN = self.calculate_K_for_KNN()
+        self.bandwidth = self.get_bandwidth()
 
     def count_cluster(self):
         counter = Counter(self.Y)
@@ -54,6 +56,34 @@ class Dataset:
             return good_K
         else:
             raise Exception('X and Y are not properly configured')
+
+    def get_bandwidth(self):
+        storage_file = './storage/dataset_' + self.name + '.json'
+
+        if not os.path.exists(storage_file):
+            # file not found
+            open(storage_file, 'w').close()
+
+        with open(storage_file) as file:
+            try:
+                data = json.load(file)
+            except ValueError:
+                data = {}
+
+        if 'bandwidth' in data:
+            # needed information is in the file
+            bandwidth = data['bandwidth']
+            return bandwidth
+
+        if self.X is not None:
+            data['bandwidth'] = get_bandwidth(self.X)
+            # save to database
+            with open(storage_file, 'w') as file:
+                json.dump(data, file)
+
+            return data['bandwidth']
+        else:
+            raise Exception('X is not properly configured')
 
     def has_testdata(self):
         return self.X_test is not None and self.Y_test is not None
