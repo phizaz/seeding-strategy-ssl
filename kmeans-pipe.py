@@ -1,13 +1,13 @@
 from pipe import Pipe
 from wrapper import kmeans
 from pipetools import *
-from dataset import get_iris
+from dataset import *
 
-iris = get_iris()
+dataset = get_pendigits()
 
 a = Pipe()\
-    .x(iris.X)\
-    .pipe(kmeans(3))\
+    .x(dataset.X)\
+    .pipe(kmeans(dataset.cluster_cnt))\
     .connect(stop())
 
 print(a)
