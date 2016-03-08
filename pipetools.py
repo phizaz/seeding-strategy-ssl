@@ -17,6 +17,12 @@ def load_y(file_path, delimiter = ',', get_label = lambda x: x[-1]):
     points = to_list(points)
     return points
 
+def assign(field, fn):
+    def fn(inst):
+        return inst.set(field, fn(inst))
+
+    return fn
+
 def predict():
     def fn(inst):
         if not 'model' in inst:

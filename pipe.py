@@ -47,9 +47,19 @@ class Pipe:
         if not map_fn:
             map_fn = default_map
 
+        def wrapper_fn(map_fn):
+            # attach some information about the pipe
+            def fn(inst, idx, total):
+                new_inst = inst\
+                    .set('pipe_no', idx)\
+                    .set('pipe_cnt', total)
+                return map_fn(new_inst, idx, total)
+
+            return fn
+
         def multiplier(l, cnt):
             if not isinstance(l, pvectorc.PVector):
-                return pvector(list(map(lambda x: map_fn(x[1], x[0], cnt),
+                return pvector(list(map(lambda x: wrapper_fn(map_fn)(x[1], x[0], cnt),
                                         enumerate([l] * cnt))))
             else:
                 return pvector(list(map(lambda x: multiplier(x, cnt), l)))
