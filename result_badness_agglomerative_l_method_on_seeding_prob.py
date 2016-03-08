@@ -11,14 +11,14 @@ import numpy as np
 
 datasets = [
     get_iris(),
-    # get_yeast(),
-    # get_letter(),
-    # get_pendigits(),
-    # get_satimage(),
-    # get_banknote(),
-    # get_eeg(),
-    # get_magic(),
-    # get_spam()
+    get_yeast(),
+    get_letter(),
+    get_pendigits(),
+    get_satimage(),
+    get_banknote(),
+    get_eeg(),
+    get_magic(),
+    get_spam()
 ]
 
 def kmeans_ssl(clusters, neighbors):
@@ -51,10 +51,12 @@ def normal(data, probs):
         .x_test(data.X_test) \
         .y_test(data.Y_test) \
         .pipe(badness_agglomeratvie_l_method(prepare=True)) \
+        .pipe(badness_kde(data.bandwidth, prepare=True)) \
         .split(len(probs), seeder(probs))\
             .pipe(badness_agglomeratvie_l_method()) \
+            .pipe(badness_kde()) \
             .connect(kmeans_ssl(cluster_cnt, data.K_for_KNN)) \
-        .merge('result', group('evaluation', 'badness'))\
+        .merge('result', group('evaluation', 'badness', 'badness-kde'))\
         .connect(stop())
 
 def cv(data, probs):

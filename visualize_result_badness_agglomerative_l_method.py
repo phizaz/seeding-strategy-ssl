@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
-dataset = 'banknote'
-with open('results/badness_agglomerative_l_method-' + dataset + '.json') as file:
+dataset = 'satimage'
+with open('results/badness_agglomerative_l_method_on_seeding_prob-' + dataset + '.json') as file:
     result = json.load(file)
 
 evaluation = result['evaluation']
