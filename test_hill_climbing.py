@@ -5,18 +5,19 @@ import numpy as np
 from cartesian import cartesian
 from concurrent.futures import ProcessPoolExecutor
 from random import shuffle
+import matplotlib.pyplot as plt
 
 
 dataset = get_iris()
 # dataset = get_pendigits()
 
-X = list(map(lambda x: x[:2], dataset.X))
-dataset.X = X
+# X = list(map(lambda x: x[:2], dataset.X))
+X = dataset.X
 
-climb = create_hill_climber(dataset, fast=True)
+climb = create_hill_climber(X, dataset.bandwidth, fast=True, ret_histroy=True)
 #climb = create_hill_climber(dataset, fast=False)(rate=0.001)
 
-x, y = list(zip(*X))
+x, y, *_ = list(zip(*X))
 plt.scatter(x, y, c='blue')
 
 # space = np.linspace(0, 1, 10)
@@ -43,10 +44,10 @@ with ProcessPoolExecutor() as executor:
     for e in executors:
         summit, history = e.result()
         summits.append(summit)
-        path_x, path_y = list(zip(*history))
+        path_x, path_y, *_ = list(zip(*history))
         plt.scatter(path_x, path_y, c='red', edgecolors='none')
 
-    summit_x, summit_y = list(zip(*summits))
+    summit_x, summit_y, *_ = list(zip(*summits))
     plt.scatter(summit_x, summit_y, c='green')
 
 end_time = time.time()

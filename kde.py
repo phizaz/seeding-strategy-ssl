@@ -6,6 +6,8 @@ from sklearn.grid_search import GridSearchCV
 import time
 from fast_climb_approx import create_fast_climb_kdtree
 from random import shuffle
+from parmap import parmap
+from collections import Counter
 
 def kernel(x):
     d = len(x)
@@ -59,11 +61,9 @@ def get_bandwidth(X, mode='cv'):
 
     return cv_bandwidth(X)
 
-def create_hill_climber(dataset, fast=True, ret_histroy=False):
-    X = dataset.X
-    # bandwidth = get_bandwidth(X, mode='cv')
-    bandwidth = dataset.bandwidth
+def create_hill_climber(X, bandwidth, fast=True, ret_histroy=False):
     density = create_density_fn(X, bandwidth, 'scikit')
+    call_cnt = 0
 
     def normal_climber(rate=.01):
         # it is not as good should not be used!
@@ -107,6 +107,9 @@ def create_hill_climber(dataset, fast=True, ret_histroy=False):
         return climb_till_end
 
     def fast_climb_till_end(x, approx=None):
+        nonlocal call_cnt
+
+        call_cnt += 1
 
         if approx:
             # this is a future feature
@@ -118,12 +121,12 @@ def create_hill_climber(dataset, fast=True, ret_histroy=False):
         else:
             def fast_climb(x):
                 # denclue 2.0 paper
-                start_time = time.process_time()
+                # start_time = time.process_time()
                 computed_kernel = [kernel((x - each_x) / bandwidth) for each_x in X]
                 s1 = sum(each_kernel * each_x for each_kernel, each_x in zip(computed_kernel, X))
                 s2 = sum(computed_kernel)
-                end_time = time.process_time()
-                print('fast_climb:', end_time - start_time)
+                # end_time = time.process_time()
+                # print('fast_climb:', end_time - start_time)
                 return s1 / s2
 
         current = x
@@ -141,7 +144,7 @@ def create_hill_climber(dataset, fast=True, ret_histroy=False):
 
             # start_time = time.process_time()
             next_dense = density(next)
-            d = abs(next_dense - current_dense) / current_dense * 100
+            d = abs(next_dense - current_dense) / current_dense
             # d = diff(current, next)
             # end_time = time.process_time()
             # print('diff:', end_time - start_time)
@@ -149,9 +152,11 @@ def create_hill_climber(dataset, fast=True, ret_histroy=False):
             current, current_dense = next, next_dense
             # current = next
 
-            if d < 0.00001:
-                # density increament less than 0.1%
+            if d < 1e-8:
+                # this is quite controversial
                 break
+
+        print('call_cnt:', call_cnt, 'summit:', current)
 
         if ret_histroy:
             return current, history
@@ -163,18 +168,27 @@ def create_hill_climber(dataset, fast=True, ret_histroy=False):
     else:
         return normal_climber
 
-def denclue(dataset, sample_rate=.1):
+def denclue(X, bandwidth, sample_size=-1):
     # sample is the number of points (ratio) to be climbing to the summit
     # most cases 10% is more than enough, since climbing is a very expensive process
-    hill_climber = create_hill_climber(dataset)
-    X = dataset.X[:]
-    shuffle(X)
-    sample_cnt = int(len(X) * sample_rate)
+    hill_climber = create_hill_climber(X, bandwidth)
+    shuffled_X = X[:]
+    shuffle(shuffled_X)
 
-    centroids = set()
-    for x in X[:sample_cnt]:
-        summit = hill_climber(x)
-        rounded_summit = tuple(map(lambda x: round(x, 4), summit))
-        centroids.add(rounded_summit)
+    if sample_size == -1:
+        # default is 10%
+        sample_size = len(X) * 0.1
 
-    return list(centroids)
+    def format_list(l):
+        # the best bet we have is to round first and format to string after
+        return tuple(map(lambda x: format(round(x, 5), '.5f'), l))
+
+    summits = parmap(lambda x: format_list(hill_climber(x)),
+                     shuffled_X[:sample_size])
+    centroids = Counter(summits)
+
+    centroids_list = list(map(lambda x: np.array(list(map(float, x))), centroids))
+    # centroids_list.sort(key=lambda x: x[0])
+    # print('centroid_list:', centroids_list)
+
+    return centroids_list

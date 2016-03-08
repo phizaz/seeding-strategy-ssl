@@ -11,14 +11,14 @@ import numpy as np
 
 datasets = [
     get_iris(),
-    # get_yeast(),
-    # get_letter(),
-    # get_pendigits(),
-    # get_satimage(),
-    # get_banknote(),
-    # get_eeg(),
-    # get_magic(),
-    # get_spam()
+    get_yeast(),
+    get_letter(),
+    get_pendigits(),
+    get_satimage(),
+    get_banknote(),
+    get_eeg(),
+    get_magic(),
+    get_spam()
 ]
 
 def kmeans_ssl(clusters, neighbors):

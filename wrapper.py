@@ -7,6 +7,7 @@ from badness import *
 from pipe import Pipe
 from pipetools import *
 from util import *
+from kde import *
 
 def kmeans(n_clusters=8, n_init=10):
     def fn(inst):
@@ -111,8 +112,45 @@ def kernel_density_estimation(*args, **margs):
 
     return fn
 
-def badness_denclue(prepare=False):
-    pass
+def badness_denclue(bandwidth=None, prepare=False):
+    def prepare_fn(inst):
+        # get good centroids
+        x = requires('x', inst)
+        if len(x) < 200:
+            sample_size = len(x)
+        else:
+            #
+            sample_size = min(3000, len(x) * 0.1)
+
+        # get the 'good' centroids
+        centroids = denclue(x, bandwidth, sample_size)
+
+        return inst.set('good_centroids', centroids)
+
+    def fn(inst):
+        x, y_seed, good_centroids = requires(['x', 'y_seed', 'good_centroids'], inst)
+
+        # build seeding list
+        seeding = list(map(lambda x: x[0],
+                           filter(lambda a: a[1] is not None,
+                                  zip(x, y_seed))))
+
+        if len(seeding) == len(x):
+            raise Exception('you probably seed with 100%')
+
+        badness = {
+            'rmsd': rmsd_nearest_from_centroids(seeding, good_centroids),
+            'md': md_nearest_from_centroids(seeding, good_centroids),
+        }
+
+        print('badness_denclue:', badness)
+
+        return inst.set('badness_denclue', badness)
+
+    if prepare:
+        return prepare_fn
+    else:
+        return fn
 
 def badness_kde(bandwidth=None, prepare=False):
     # it is not really good because it really means more seeding points
