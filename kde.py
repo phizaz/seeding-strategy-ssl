@@ -64,14 +64,8 @@ def create_hill_climber(dataset, fast=True):
     bandwidth = dataset.bandwidth
     density = create_density_fn(X, bandwidth, 'scikit')
 
-    def diff(f, t):
-        # this is rather slower
-        dif = f - t
-        dist = inner(dif, dif) ** .5
-        base = inner(f, f) ** .5
-        return dist / base * 100
-
     def normal_climber(rate=.01):
+        # it is not as good should not be used!
         gradient = create_gradienter(X, bandwidth)
 
         def climb(x):
@@ -105,9 +99,14 @@ def create_hill_climber(dataset, fast=True):
 
         return climb_till_end
 
-    def fast_climb_till_end(x, approx=0.005):
+    def fast_climb_till_end(x, approx=None):
 
         if approx:
+            # this is a future feature
+            # for approximate gaussian processing
+            # using kdtree to calculate the effect of far away points
+            # and points in the same region (small) to have
+            # the same averaged kernel weight
             fast_climb = create_fast_climb_kdtree(X, kernel, approx)
         else:
             def fast_climb(x):
@@ -144,7 +143,6 @@ def create_hill_climber(dataset, fast=True):
                 break
 
         return current, history
-
 
     if fast:
         return fast_climb_till_end
