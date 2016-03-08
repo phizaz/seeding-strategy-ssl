@@ -11,14 +11,14 @@ import numpy as np
 
 datasets = [
     get_iris(),
-    get_yeast(),
-    get_letter(),
-    get_pendigits(),
-    get_satimage(),
-    get_banknote(),
-    get_eeg(),
-    get_magic(),
-    get_spam()
+    # get_yeast(),
+    # get_letter(),
+    # get_pendigits(),
+    # get_satimage(),
+    # get_banknote(),
+    # get_eeg(),
+    # get_magic(),
+    # get_spam()
 ]
 
 def kmeans_ssl(clusters, neighbors):
@@ -38,7 +38,9 @@ def seeder(probs):
         y_seed = seeding_fn(inst)
         # print('pipe no:', idx, 'prob:', probs[idx])
         # print('y_seed:', y_seed)
-        return inst.set('y_seed', y_seed)
+        return inst\
+            .set('y_seed', y_seed)\
+            .set('seeding_prob', probs[idx])
 
     return map_fn
 
@@ -56,7 +58,7 @@ def normal(data, probs):
             .pipe(badness_agglomeratvie_l_method()) \
             .pipe(badness_kde()) \
             .connect(kmeans_ssl(cluster_cnt, data.K_for_KNN)) \
-        .merge('result', group('evaluation', 'badness', 'badness-kde'))\
+        .merge('result', group('evaluation', 'badness', 'badness_kde', 'seeding_prob'))\
         .connect(stop())
 
 def cv(data, probs):
@@ -73,7 +75,7 @@ def cv(data, probs):
             .split(10, cross('y_seed')) \
                 .connect(kmeans_ssl(cluster_cnt, data.K_for_KNN)) \
             .merge('evaluation', total('evaluation')) \
-        .merge('result', group('evaluation', 'badness', 'badness-kde'))\
+        .merge('result', group('evaluation', 'badness', 'badness_kde', 'seeding_prob'))\
         .connect(stop())
 
 def run_and_save(dataset):

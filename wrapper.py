@@ -115,7 +115,8 @@ def badness_denclue(prepare=False):
     pass
 
 def badness_kde(bandwidth=None, prepare=False):
-
+    # it is not really good because it really means more seeding points
+    # equals to more score which is not always the case
     def prepare_fn(inst):
         if not bandwidth:
             raise Exception('no bandwidth given')
@@ -139,7 +140,7 @@ def badness_kde(bandwidth=None, prepare=False):
         log_pdf = kde.score_samples(seeding)
         badness = sum(np.exp(log_pdf))
 
-        return inst.set('badness-kde', badness)
+        return inst.set('badness_kde', badness)
 
     if prepare:
         return prepare_fn
