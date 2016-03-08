@@ -5,6 +5,7 @@ from sklearn.neighbors.kde import KernelDensity
 from sklearn.grid_search import GridSearchCV
 import time
 from fast_climb_approx import create_fast_climb_kdtree
+from random import shuffle
 
 def kernel(x):
     d = len(x)
@@ -58,7 +59,7 @@ def get_bandwidth(X, mode='cv'):
 
     return cv_bandwidth(X)
 
-def create_hill_climber(dataset, fast=True):
+def create_hill_climber(dataset, fast=True, ret_histroy=False):
     X = dataset.X
     # bandwidth = get_bandwidth(X, mode='cv')
     bandwidth = dataset.bandwidth
@@ -77,12 +78,14 @@ def create_hill_climber(dataset, fast=True):
         def climb_till_end(x):
             current = x
             current_dense = density(current)
-            history = [current]
+            if ret_histroy:
+                history = [current]
             # print('start:', current)
             while True:
                 next = climb(current)
 
-                history.append(next)
+                if ret_histroy:
+                    history.append(next)
                 # print('next:', next)
 
                 next_dense = density(next)
@@ -95,7 +98,11 @@ def create_hill_climber(dataset, fast=True):
                 if d < 0.01:
                     # density increament less than 0.1%
                     break
-            return current, history
+
+            if ret_histroy:
+                return current, history
+            else:
+                return current
 
         return climb_till_end
 
@@ -121,11 +128,15 @@ def create_hill_climber(dataset, fast=True):
 
         current = x
         current_dense = density(current)
-        history = [current]
+
+        if ret_histroy:
+            history = [current]
 
         while True:
             next = fast_climb(current)
-            history.append(next)
+
+            if ret_histroy:
+                history.append(next)
             # print('next:', next)
 
             # start_time = time.process_time()
@@ -142,12 +153,28 @@ def create_hill_climber(dataset, fast=True):
                 # density increament less than 0.1%
                 break
 
-        return current, history
+        if ret_histroy:
+            return current, history
+        else:
+            return current
 
     if fast:
         return fast_climb_till_end
     else:
         return normal_climber
 
+def denclue(dataset, sample_rate=.1):
+    # sample is the number of points (ratio) to be climbing to the summit
+    # most cases 10% is more than enough, since climbing is a very expensive process
+    hill_climber = create_hill_climber(dataset)
+    X = dataset.X[:]
+    shuffle(X)
+    sample_cnt = int(len(X) * sample_rate)
 
+    centroids = set()
+    for x in X[:sample_cnt]:
+        summit = hill_climber(x)
+        rounded_summit = tuple(map(lambda x: round(x, 4), summit))
+        centroids.add(rounded_summit)
 
+    return list(centroids)
