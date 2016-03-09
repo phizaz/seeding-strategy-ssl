@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
-dataset = 'iris'
+dataset = 'pendigits'
 with open('results/badness_on_many_seeding-' + dataset + '.json') as file:
     result = json.load(file)
 
@@ -35,6 +35,9 @@ def plot(ax, sort=lambda x: x[0]):
     ax.plot(x, badness_denclue_md, 'k', color="blue", label='bad kde')
     ax.plot(x, badness_naive_md, 'k', label='bad naive')
 
+    plt.sca(ax)
+    plt.xticks(range(len(names)), names, rotation=90)
+
     legend = ax.legend(loc='center right', shadow=True)
     # Now add the legend with some customizations.
     # The frame is matplotlib.patches.Rectangle instance surrounding the legend.
@@ -52,10 +55,5 @@ plot(axes[0], lambda x: x[0])
 plot(axes[1], lambda x: x[1])
 
 plt.subplots_adjust(bottom=0.3)
-plt.setp(axes, xticks=range(len(result['name'])), xticklabels=result['name'])
-
-for ax in axes:
-    plt.sca(ax)
-    plt.xticks(rotation=90)
 
 plt.show()
