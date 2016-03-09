@@ -70,8 +70,11 @@ class Pipe:
         # print('new_stack:', new_stack)
         return Pipe(self, new_stack)
 
-    def merge(self, key, reduce_fn):
+    def merge(self, keys, *reduce_fns):
         # reduce_fn(list of pipe instance) -> any
+
+        if isinstance(keys, str):
+            keys = [keys]
 
         def go_deep(l):
             if not isinstance(l, pvectorc.PVector):
@@ -88,7 +91,8 @@ class Pipe:
                         result.append(a)
 
                 if is_ceil:
-                    return reduce_fn(l)
+                    # return reduce_fn(l)
+                    return list(map(lambda reduce_fn: reduce_fn(l), reduce_fns))
                 else:
                     return pvector(result)
 
@@ -96,12 +100,19 @@ class Pipe:
         #print('result:', result)
         second_top = self.stack[-2]
         #print('second_top:', second_top)
+
+        def set(inst, result):
+            for key, val in zip(keys, result):
+                inst = inst.set(key, val)
+            return inst
+
         if not isinstance(second_top, pvectorc.PVector):
-            new_top = second_top.set(key, result)
+            # it is only one level split
+            new_top = set(second_top, result)
         else:
-            new_top = pvector(list(map(lambda x: x[1].set(key, result[x[0]]),
-                                   enumerate(second_top))))
-        #print(new_top)
+            new_top = pvector(list(map(lambda x: set(x[0], x[1]),
+                                       zip(second_top, result))))
+            # print(new_top)
         new_stack = self.stack[:-2].append(new_top)
         return Pipe(self, new_stack)
 

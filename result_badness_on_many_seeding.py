@@ -21,14 +21,15 @@ datasets = [
     # get_spam()
 ]
 
-def kmeans_ssl(clusters, neighbors):
+def kmeans_ssl(clusters, neighbors, field):
     def fn(pipe):
         p = pipe \
             .pipe(kmeans(clusters)) \
             .y(label_consensus()) \
             .pipe(knn(neighbors)) \
             .pipe(predict()) \
-            .pipe(evaluate())
+            .pipe(evaluate())\
+            .pipe(copy('evaluation', field))
         return p
     return fn
 
@@ -94,7 +95,11 @@ def run_and_save(dataset):
                 .pipe(badness_agglomeratvie_l_method()) \
                 .pipe(badness_denclue()) \
                 .connect(kmeans_ssl(cluster_cnt, dataset.K_for_KNN)) \
-            .merge('result', group('evaluation', 'badness', 'badness_denclue', 'badness_naive', 'name')) \
+            .merge('result', group('evaluation',
+                                   'badness',
+                                   'badness_denclue',
+                                   'badness_naive',
+                                   'name')) \
             .connect(stop())
 
     def cv():
@@ -109,9 +114,15 @@ def run_and_save(dataset):
                 .pipe(badness_agglomeratvie_l_method()) \
                 .pipe(badness_denclue()) \
                 .split(10, cross('y_seed')) \
-                    .connect(kmeans_ssl(cluster_cnt, dataset.K_for_KNN)) \
-                .merge('evaluation', total('evaluation')) \
-            .merge('result', group('evaluation', 'badness', 'badness_denclue', 'badness_naive', 'name')) \
+                    .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
+                    .connect(kmeans_ssl(cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
+                .merge(['evaluation_kmeans_1', 'evaluation_kmeans_3'], total('evaluation_kmeans_1'), total('evaluation_kmeans_3')) \
+            .merge('result', group('evaluation_kmeans_1',
+                                   'evaluation_kmeans_3',
+                                   'badness',
+                                   'badness_denclue',
+                                   'badness_naive',
+                                   'name')) \
             .connect(stop())
 
     if dataset.has_testdata():
