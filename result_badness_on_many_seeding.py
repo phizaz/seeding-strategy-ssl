@@ -75,9 +75,6 @@ def run_and_save(dataset):
     print('dataset:', dataset.name)
     print('has_testdata:', dataset.has_testdata())
 
-    # just set as defacto standard kmeans
-    cluster_cnt = dataset.cluster_cnt * 3
-
     seeding_fns, seeding_names = create_seeding_fns(dataset)
     print('seeding_names:', seeding_names)
 
@@ -94,8 +91,10 @@ def run_and_save(dataset):
                 .pipe(badness_naive()) \
                 .pipe(badness_agglomeratvie_l_method()) \
                 .pipe(badness_denclue()) \
-                .connect(kmeans_ssl(cluster_cnt, dataset.K_for_KNN)) \
-            .merge('result', group('evaluation',
+                .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
+                .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
+            .merge('result', group('evaluation_kmeans_1',
+                                   'evaluation_kmeans_3',
                                    'badness',
                                    'badness_denclue',
                                    'badness_naive',
@@ -115,7 +114,7 @@ def run_and_save(dataset):
                 .pipe(badness_denclue()) \
                 .split(10, cross('y_seed')) \
                     .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
-                    .connect(kmeans_ssl(cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
+                    .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
                 .merge(['evaluation_kmeans_1', 'evaluation_kmeans_3'], total('evaluation_kmeans_1'), total('evaluation_kmeans_3')) \
             .merge('result', group('evaluation_kmeans_1',
                                    'evaluation_kmeans_3',
