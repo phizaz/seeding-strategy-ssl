@@ -1,7 +1,4 @@
-import traceback
 from concurrent.futures import ProcessPoolExecutor
-
-import sys
 
 from dataset import *
 from multipipetools import total, group, cross
@@ -10,15 +7,15 @@ from wrapper import *
 import numpy as np
 
 datasets = [
-    get_iris(),
-    # get_yeast(),
-    # get_letter(),
-    # get_pendigits(),
-    # get_satimage(),
-    # get_banknote(),
-    # get_eeg(),
-    # get_magic(),
-    # get_spam()
+    # get_iris(),
+    get_pendigits(),
+    #get_yeast(),
+    #get_satimage(),
+    #get_banknote(),
+    # get_eeg(), # is not suitable for SSL
+    # get_spam(), # prone to imbalanced problem
+    #get_letter(), # large dataset
+    #get_magic(), # super slow for kde hill climbing
 ]
 
 def kmeans_ssl(clusters, neighbors, field):
@@ -63,7 +60,7 @@ def seeder(seeding_fns, seeding_names):
     def map_fn(inst, idx, total):
         seeding_fn = seeding_fns[idx]
         y_seed = seeding_fn(inst)
-        # print('pipe no:', idx, 'prob:', probs[idx])
+        print('pipe no:', idx)
         # print('y_seed:', y_seed)
         return inst \
             .set('y_seed', y_seed) \
@@ -135,6 +132,9 @@ def run_and_save(dataset):
     with open('results/badness_on_many_seeding-' + dataset.name + '.json', 'w') as file:
         json.dump(result['result'], file)
 
-with ProcessPoolExecutor() as executor:
-    for dataset in datasets:
-        executor.submit(run_and_save, dataset)
+# with ProcessPoolExecutor() as executor:
+#     for dataset in datasets:
+#         executor.submit(run_and_save, dataset)
+
+for dataset in datasets:
+    run_and_save(dataset)
