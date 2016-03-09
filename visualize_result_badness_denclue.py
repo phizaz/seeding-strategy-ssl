@@ -2,13 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
-dataset = 'yeast'
-with open('results/badness_agglomerative_l_method_on_seeding_prob-' + dataset + '.json') as file:
+dataset = 'spam'
+with open('results/badness_denclue_on_seeding_prob-' + dataset + '.json') as file:
     result = json.load(file)
 
 evaluation = result['evaluation']
 acc = list(map(lambda x: x[0] / x[1], evaluation))
-badness = result['badness']
+badness = result['badness_denclue']
 rmsd = list(map(lambda x: x['rmsd'], badness))
 md = list(map(lambda x: x['md'], badness))
 

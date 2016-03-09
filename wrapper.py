@@ -119,16 +119,16 @@ def badness_denclue(bandwidth=None, prepare=False):
         if len(x) < 200:
             sample_size = len(x)
         else:
-            #
-            sample_size = min(3000, len(x) * 0.1)
+            # 200 < sample_size * 0.2 < 10000
+            sample_size = max(min(10000, int(len(x) * 0.2)), 200)
 
         # get the 'good' centroids
         centroids = denclue(x, bandwidth, sample_size)
 
-        return inst.set('good_centroids', centroids)
+        return inst.set('good_centroids_denclue', centroids)
 
     def fn(inst):
-        x, y_seed, good_centroids = requires(['x', 'y_seed', 'good_centroids'], inst)
+        x, y_seed, good_centroids = requires(['x', 'y_seed', 'good_centroids_denclue'], inst)
 
         # build seeding list
         seeding = list(map(lambda x: x[0],
@@ -143,7 +143,7 @@ def badness_denclue(bandwidth=None, prepare=False):
             'md': md_nearest_from_centroids(seeding, good_centroids),
         }
 
-        print('badness_denclue:', badness)
+        # print('badness_denclue:', badness)
 
         return inst.set('badness_denclue', badness)
 
@@ -220,6 +220,37 @@ def badness_agglomeratvie_l_method(prepare=False):
         # print('badness:', badness)
 
         return inst.set('badness', badness)
+
+    if prepare:
+        return prepare_fn
+    else:
+        return fn
+
+def badness_naive(prepare=False):
+    def prepare_fn(inst):
+        # get good centroids
+        x = requires('x', inst)
+        return inst.set('good_centroids_naive', x)
+
+    def fn(inst):
+        x, y_seed, good_centroids = requires(['x', 'y_seed', 'good_centroids_naive'], inst)
+
+        # build seeding list
+        seeding = list(map(lambda x: x[0],
+                           filter(lambda a: a[1] is not None,
+                                  zip(x, y_seed))))
+
+        if len(seeding) == len(x):
+            raise Exception('you probably seed with 100%')
+
+        badness = {
+            'rmsd': rmsd_nearest_from_centroids(seeding, good_centroids),
+            'md': md_nearest_from_centroids(seeding, good_centroids),
+        }
+
+        # print('badness:', badness)
+
+        return inst.set('badness_naive', badness)
 
     if prepare:
         return prepare_fn

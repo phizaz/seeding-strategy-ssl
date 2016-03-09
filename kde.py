@@ -172,12 +172,14 @@ def denclue(X, bandwidth, sample_size=-1):
     # sample is the number of points (ratio) to be climbing to the summit
     # most cases 10% is more than enough, since climbing is a very expensive process
     hill_climber = create_hill_climber(X, bandwidth)
-    shuffled_X = X[:]
+    shuffled_X = list(X)
     shuffle(shuffled_X)
 
     if sample_size == -1:
         # default is 10%
         sample_size = len(X) * 0.1
+
+    print('sample_size:', sample_size)
 
     def format_list(l):
         # the best bet we have is to round first and format to string after
