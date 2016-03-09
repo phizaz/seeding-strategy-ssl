@@ -59,8 +59,8 @@ class Pipe:
 
         def multiplier(l, cnt):
             if not isinstance(l, pvectorc.PVector):
-                results = parmap(lambda x: wrapper_fn(map_fn)(x[1], x[0], cnt),
-                                 enumerate([l] * cnt))
+                results = list(map(lambda x: wrapper_fn(map_fn)(x[1], x[0], cnt),
+                                 enumerate([l] * cnt)))
                 return pvector(results)
             else:
                 return pvector(list(map(lambda x: multiplier(x, cnt), l)))
