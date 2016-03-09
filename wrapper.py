@@ -13,12 +13,12 @@ def kmeans(n_clusters=8, n_init=10):
     def fn(inst):
         x = requires('x', inst)
 
-        print('kmeans x:', x)
+        #print('kmeans x:', x)
 
         kmeans = KMeans(n_clusters=n_clusters, n_init=n_init)
         kmeans.fit(x)
 
-        print('kmeans model:', kmeans)
+        #print('kmeans model:', kmeans)
 
         return inst.set('model', kmeans)\
             .set('prediction', kmeans.labels_)\
@@ -30,13 +30,13 @@ def knn(*args, **margs):
     def fn(inst):
         x, y = requires(['x', 'y'], inst)
 
-        print('len x:', len(x))
-        print('len y:', len(y))
+        #print('len x:', len(x))
+        #print('len y:', len(y))
 
         knn = KNeighborsClassifier(*args, **margs)
         knn.fit(x, y)
 
-        print('knn model:', knn)
+        #print('knn model:', knn)
 
         return inst.set('model', knn)
 
@@ -147,7 +147,7 @@ def badness_denclue(bandwidth=None, prepare=False):
             'md': md_nearest_from_centroids(seeding, good_centroids),
         }
 
-        print('badness_denclue:', badness)
+        #print('badness_denclue:', badness)
 
         return inst.set('badness_denclue', badness)
 
@@ -221,7 +221,7 @@ def badness_agglomeratvie_l_method(prepare=False):
             'md': md_nearest_from_centroids(seeding, good_centroids),
         }
 
-        print('badness-normal:', badness)
+        #print('badness-normal:', badness)
 
         return inst.set('badness', badness)
 
@@ -252,7 +252,7 @@ def badness_naive(prepare=False):
             'md': md_nearest_from_centroids(seeding, good_centroids),
         }
 
-        print('badness-naive:', badness)
+        #print('badness-naive:', badness)
 
         return inst.set('badness_naive', badness)
 

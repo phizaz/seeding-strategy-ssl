@@ -43,9 +43,10 @@ def create_seeding_fns(dataset):
         seeding_names.append('prob-' + str(prob))
 
     # seeding centroids
-    for prob in probs:
-        seeding_fns.append(seeding_centroids(prob))
-        seeding_names.append('centroid-prob-' + str(prob))
+    # problematic !! don't know why ...
+    #for prob in probs:
+    #    seeding_fns.append(seeding_centroids(prob))
+    #    seeding_names.append('centroid-prob-' + str(prob))
 
     # seeding some clusters
     half_cluster_cnt = int(dataset.cluster_cnt / 2)
