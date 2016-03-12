@@ -12,6 +12,7 @@ from itertools import chain
 from operator import itemgetter
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cross_validation import cross_val_score
+import json
 
 
 def load_data(file, delimiter=','):
@@ -55,6 +56,26 @@ def to_list(data):
                         data))
     else:
         return data
+
+def dump_array_to_file(input, file):
+    def jsonization(array):
+        if not isinstance(array, np.ndarray):
+            return array
+        else:
+            result = []
+            for row in array:
+                result.append(jsonization(row))
+            return result
+
+    with open(file, 'w') as file:
+        json.dump(jsonization(input), file)
+
+def read_file_to_array(file):
+    def arrayization(object):
+        return np.array(object)
+
+    with open(file) as file:
+        return arrayization(json.load(file))
 
 def is_prime(n):
     if n == 2 or n == 3: return True
