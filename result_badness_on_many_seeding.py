@@ -7,7 +7,7 @@ from wrapper import *
 import numpy as np
 
 datasets = [
-    # get_iris(),
+    get_iris(),
     get_pendigits(),
     #get_yeast(),
     #get_satimage(),
@@ -61,7 +61,9 @@ def seeder(seeding_fns, seeding_names):
     def map_fn(inst, idx, total):
         seeding_fn = seeding_fns[idx]
         y_seed = seeding_fn(inst)
-        print('pipe no:', idx)
+
+        dump_array_to_file(y_seed, 'seeding/' + seeding_names[idx] + '.json')
+        #print('pipe no:', idx)
         # print('y_seed:', y_seed)
         return inst \
             .set('y_seed', y_seed) \
@@ -83,8 +85,8 @@ def run_and_save(dataset):
             .x_test(dataset.X_test) \
             .y_test(dataset.Y_test) \
             .pipe(badness_naive(prepare=True)) \
-            .pipe(badness_agglomeratvie_l_method(prepare=True)) \
-            .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True)) \
+            .pipe(badness_agglomeratvie_l_method(prepare=True, name=dataset.name)) \
+            .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True, name=dataset.name)) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_agglomeratvie_l_method()) \
@@ -104,8 +106,8 @@ def run_and_save(dataset):
             .x(dataset.X) \
             .y(dataset.Y) \
             .pipe(badness_naive(prepare=True)) \
-            .pipe(badness_agglomeratvie_l_method(prepare=True)) \
-            .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True)) \
+            .pipe(badness_agglomeratvie_l_method(prepare=True, name=dataset.name)) \
+            .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True, name=dataset.name)) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_agglomeratvie_l_method()) \

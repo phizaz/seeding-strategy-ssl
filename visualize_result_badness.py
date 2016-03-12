@@ -38,7 +38,7 @@ def plot(ax, sort=lambda x: x[0]):
     plt.sca(ax)
     plt.xticks(range(len(names)), names, rotation=90)
 
-    legend = ax.legend(loc='center right', shadow=True)
+    legend = ax.legend(loc='upper right', shadow=True)
     # Now add the legend with some customizations.
     # The frame is matplotlib.patches.Rectangle instance surrounding the legend.
     frame = legend.get_frame()

@@ -8,6 +8,7 @@ from pipe import Pipe
 from pipetools import *
 from util import *
 from kde import *
+from cache import StorageCache
 
 def kmeans(n_clusters=8, n_init=10):
     def fn(inst):
@@ -116,18 +117,37 @@ def kernel_density_estimation(*args, **margs):
 
     return fn
 
-def badness_denclue(bandwidth=None, prepare=False):
+def badness_denclue(bandwidth=None, prepare=False, name=None):
+    # with given name, it will cache
+
     def prepare_fn(inst):
+        if not bandwidth:
+            raise Exception('no bandwidth given!')
+
         # get good centroids
         x = requires('x', inst)
-        if len(x) < 200:
-            sample_size = len(x)
-        else:
-            # 200 < sample_size * 0.2 < 10000
-            sample_size = max(min(10000, int(len(x) * 0.2)), 200)
 
-        # get the 'good' centroids
-        centroids = denclue(x, bandwidth, sample_size)
+        if name is not None:
+            full_name = 'centroids_' + name + '_denclue_bandwidth_' + str(bandwidth)
+            file = 'storage/' + full_name + '.json'
+            cache = StorageCache(file)
+
+        if 'cache' in locals() and not cache.isnew():
+            # load good centroids from storage and convert to np array
+            centroids = np.array(cache.get())
+        else:
+            if len(x) < 200:
+                sample_size = len(x)
+            else:
+                # 200 < sample_size * 0.2 < 10000
+                sample_size = max(min(10000, int(len(x) * 0.2)), 200)
+
+            # get the 'good' centroids
+            centroids = denclue(x, bandwidth, sample_size)
+            if 'cache' in locals():
+                # update cache, save to the storage
+                cache.update(array_to_list(centroids))
+                cache.save()
 
         return inst.set('good_centroids_denclue', centroids)
 
@@ -156,54 +176,39 @@ def badness_denclue(bandwidth=None, prepare=False):
     else:
         return fn
 
-def badness_kde(bandwidth=None, prepare=False):
-    # it is not really good because it really means more seeding points
-    # equals to more score which is not always the case
-    def prepare_fn(inst):
-        if not bandwidth:
-            raise Exception('no bandwidth given')
-
-        x = requires('x', inst)
-
-        kde = KernelDensity(rtol=1e-6, bandwidth=bandwidth, kernel='gaussian')
-        kde.fit(x)
-
-        return inst.set('kde', kde)
-
-    def fn(inst):
-        kde, y_seed, x = requires(['kde', 'y_seed', 'x'], inst)
-
-        # build seeding list
-        seeding = list(map(lambda x: x[0],
-                           filter(lambda a: a[1] is not None,
-                                  zip(x, y_seed))))
-        # print('seeding:', seeding)
-
-        log_pdf = kde.score_samples(seeding)
-        badness = sum(np.exp(log_pdf))
-
-        return inst.set('badness_kde', badness)
-
-    if prepare:
-        return prepare_fn
-    else:
-        return fn
-
-def badness_agglomeratvie_l_method(prepare=False):
+def badness_agglomeratvie_l_method(prepare=False, name=None):
+    # with a given name it will cache
     def prepare_fn(inst):
         # get good centroids
         x, y = requires(['x', 'y'], inst)
 
-        # get the 'good' centroids
-        result = Pipe() \
-            .x(x) \
-            .y(y) \
-            .pipe(agglomerative_l_method()) \
-            .connect(stop())
-        if not 'centroids' in result:
-            raise Exception('no centroids in pipe')
+        if name is not None:
+            full_name = 'centroids_' + name + '_l_method'
+            file = 'storage/' + full_name + '.json'
+            cache = StorageCache(file)
 
-        return inst.set('good_centroids', result['centroids'])
+        if 'cache' in locals() and not cache.isnew():
+            centroids = np.array(cache.get())
+        else:
+
+
+            # get the 'good' centroids
+            result = Pipe() \
+                .x(x) \
+                .y(y) \
+                .pipe(agglomerative_l_method()) \
+                .connect(stop())
+            if not 'centroids' in result:
+                raise Exception('no centroids in pipe')
+
+            centroids = result['centroids']
+
+            if 'cache' in locals():
+                # update the cache and save to the storage
+                cache.update(array_to_list(centroids))
+                cache.save()
+
+        return inst.set('good_centroids', centroids)
 
     def fn(inst):
         x, y_seed, good_centroids = requires(['x', 'y_seed', 'good_centroids'], inst)

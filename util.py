@@ -57,18 +57,23 @@ def to_list(data):
     else:
         return data
 
+
+def array_to_list(array):
+    if array is None or isinstance(array, (str, int, float)):
+        return array
+    else:
+        result = []
+        for row in array:
+            result.append(array_to_list(row))
+
+        # print('result:', result)
+        return result
+
 def dump_array_to_file(input, file):
-    def jsonization(array):
-        if not isinstance(array, np.ndarray):
-            return array
-        else:
-            result = []
-            for row in array:
-                result.append(jsonization(row))
-            return result
+    #print('dumping:', input)
 
     with open(file, 'w') as file:
-        json.dump(jsonization(input), file)
+        json.dump(array_to_list(input), file)
 
 def read_file_to_array(file):
     def arrayization(object):
