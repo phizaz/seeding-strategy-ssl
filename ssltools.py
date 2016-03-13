@@ -1,4 +1,5 @@
 from collections import Counter
+from functools import partial
 from random import shuffle, randint
 from pyrsistent import pvector
 from sklearn.cluster import KMeans
@@ -7,56 +8,37 @@ from util import *
 import itertools
 
 def label_consensus():
+
+    def get_majority(counter):
+        if len(counter) == 0:
+            # this should return something that would never collide with real label
+            # to make the result bad as it should be
+            # becasue if we use random here the result might be inconsistent
+            return '@#$'
+
+        most_common, cnt = counter.most_common(1).pop()
+        return most_common
+
+    def get_label(label_freq_by_group, group):
+        return get_majority(label_freq_by_group[group])
+
     def fn(inst):
         prediction, y_seed = requires(['prediction', 'y_seed'], inst)
 
-        # print('y_seed:', y_seed)
-        # print('prediction:', prediction)
+        group_cnt = max(prediction) + 1 # it starts with 0
+        label_freq_by_group = [Counter() for i in range(group_cnt)]
+        for group, label in zip(prediction, y_seed):
+            if label is None:
+                continue
 
-        # cnt = sum(each is not None for each in y_seed)
-        # print('cnt:', cnt)
+            label_freq_by_group[group][label] += 1
 
-        if all(each is None for each in y_seed):
-            # no labels at all just random one label from the Y
-            y = requires('y', inst)
-            label = y[randint(0, len(y) - 1)]
-            new_y = [label for each in y]
-            # print('new_y:', new_y)
-            return pvector(new_y)
+        # print('label freq by group:', label_freq_by_group)
 
-        group_labels = [None for each in range(max(prediction) + 1)]
-        for i, g in enumerate(prediction):
-            label = y_seed[i]
-            if label:
-                if not group_labels[g]:
-                    group_labels[g] = Counter()
-                group_labels[g][label] += 1
-        # print('group_labels:', group_labels)
-        majority = list(map(lambda x: x.most_common(1)[0] if x else None, group_labels))
-        # print('majority:', majority)
-        new_y = [None for i in range(len(y_seed))]
-        for i, g in enumerate(prediction):
-            # majority comes in (label, freq) or None
-            maj = majority[g]
-            if maj:
-                # if there is a majority
-                # take only the first part
-                new_y[i] = maj[0]
-
-        # randomly fill the rest (None)
-        for i, each in enumerate(new_y):
-            if not each:
-                # randomly select one label from another
-                # if unfortunate we select None again
-                # this's why we put it inside while loop
-                while True:
-                    r = randint(0, len(new_y) - 1)
-                    v = new_y[r]
-                    if v:
-                        new_y[i] = v
-                        break
-
+        get_label_partial = partial(get_label, label_freq_by_group)
+        new_y = list(map(get_label_partial, prediction))
         # print('new_y:', new_y)
+
         return pvector(new_y)
 
     return fn

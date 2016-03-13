@@ -5,7 +5,7 @@ import matplotlib.cm as cmx
 import matplotlib.colors as colors
 from cache import StorageCache
 
-dataset = get_magic()
+dataset = get_letter()
 # print('bandwidth:', dataset.get_bandwidth(force=True))
 
 pca = PCA(n_components=2)
@@ -23,7 +23,12 @@ def get_cmap(N):
     def map_index_to_rgb_color(index):
         return scalar_map.to_rgba(index)
 
+    def static(index):
+        return 'rgb'[index]
+
     return map_index_to_rgb_color
+    # return static
+
 
 cmap = get_cmap(dataset.cluster_cnt)
 print('cluster_cnt:', dataset.cluster_cnt)
@@ -39,10 +44,10 @@ for x, y in zip(X, Y):
 
     group[y].append(x)
 
-print('group:', group)
-
 for i, (name, points) in zip(range(dataset.cluster_cnt), group.items()):
     # plot X on it deverse it using color according to different Y
+    print('color:', cmap(i))
+    print('count:', len(points))
     plot(points, color=cmap(i))
 
 # cache = StorageCache('storage/centroids_pendigits_denclue_bandwidth_0.05414864864864865.json')
@@ -50,13 +55,13 @@ for i, (name, points) in zip(range(dataset.cluster_cnt), group.items()):
 # centroids = pca.transform(centroids)
 #
 # plot(centroids, color='red')
-#
-# cache = StorageCache('seeding/' + dataset.name + '_prob-0.01.json')
-# seeds = cache.get()
-# seeds = list(map(lambda x: x[1],
-#                  filter(lambda x: x[0],
-#                         zip(seeds, dataset.X))))
-# seeds = pca.transform(seeds)
-# plot(seeds, color='green')
+
+cache = StorageCache('seeding/' + dataset.name + '_prob-0.03.json')
+seeds = cache.get()
+seeds = list(map(lambda x: x[1],
+                 filter(lambda x: x[0],
+                        zip(seeds, dataset.X))))
+seeds = pca.transform(seeds)
+plot(seeds, color='black')
 
 plt.show()
