@@ -5,17 +5,18 @@ from multipipetools import total, group, cross
 from ssltools import *
 from wrapper import *
 import numpy as np
+from cache import StorageCache
 
 datasets = [
     get_iris(),
     get_pendigits(),
-    #get_yeast(),
-    #get_satimage(),
-    #get_banknote(),
+    get_yeast(),
+    get_satimage(),
+    get_banknote(),
     # get_eeg(), # is not suitable for SSL
     # get_spam(), # prone to imbalanced problem
-    #get_letter(), # large dataset
-    #get_magic(), # super slow for kde hill climbing
+    get_letter(), # large dataset
+    get_magic(), # super slow for kde hill climbing
 ]
 
 def kmeans_ssl(clusters, neighbors, field):
@@ -57,12 +58,22 @@ def create_seeding_fns(dataset):
 
     return seeding_fns, seeding_names
 
-def seeder(seeding_fns, seeding_names):
+def seeder(seeding_fns, seeding_names, name):
     def map_fn(inst, idx, total):
-        seeding_fn = seeding_fns[idx]
-        y_seed = seeding_fn(inst)
+        # now using caching technique to have the consistent result for each runtime
+        file = 'seeding/' + name + '_' + seeding_names[idx] + '.json'
+        cache = StorageCache(file)
 
-        dump_array_to_file(y_seed, 'seeding/' + seeding_names[idx] + '.json')
+        if not cache.isnew():
+            y_seed = np.array(cache.get())
+        else:
+            seeding_fn = seeding_fns[idx]
+            y_seed = seeding_fn(inst)
+
+            # save to the cache
+            cache.update(array_to_list(y_seed))
+            cache.save()
+
         #print('pipe no:', idx)
         # print('y_seed:', y_seed)
         return inst \
@@ -87,7 +98,7 @@ def run_and_save(dataset):
             .pipe(badness_naive(prepare=True)) \
             .pipe(badness_agglomeratvie_l_method(prepare=True, name=dataset.name)) \
             .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True, name=dataset.name)) \
-            .split(len(seeding_fns), seeder(seeding_fns, seeding_names)) \
+            .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_agglomeratvie_l_method()) \
                 .pipe(badness_denclue()) \
@@ -108,7 +119,7 @@ def run_and_save(dataset):
             .pipe(badness_naive(prepare=True)) \
             .pipe(badness_agglomeratvie_l_method(prepare=True, name=dataset.name)) \
             .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True, name=dataset.name)) \
-            .split(len(seeding_fns), seeder(seeding_fns, seeding_names)) \
+            .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_agglomeratvie_l_method()) \
                 .pipe(badness_denclue()) \

@@ -57,7 +57,7 @@ class Dataset:
         else:
             raise Exception('X and Y are not properly configured')
 
-    def get_bandwidth(self):
+    def get_bandwidth(self, force=False):
         storage_file = './storage/dataset_' + self.name + '.json'
 
         if not os.path.exists(storage_file):
@@ -70,7 +70,7 @@ class Dataset:
             except ValueError:
                 data = {}
 
-        if 'bandwidth' in data:
+        if not force and 'bandwidth' in data:
             # needed information is in the file
             bandwidth = data['bandwidth']
             return bandwidth
