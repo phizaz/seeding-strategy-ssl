@@ -8,12 +8,13 @@ from fast_climb_approx import create_fast_climb_kdtree
 from random import shuffle
 from parmap import parmap
 from collections import Counter
+from functools import partial
 
 def kernel(x):
     d = len(x)
     return ((2 * math.pi) ** (-d / 2)) * math.exp(-inner(x, x) / 2)
 
-def create_density_fn(X, bandwidth=.2, author='me'):
+def create_density_fn(X, bandwidth=.2, author='scikit'):
     if author == 'me':
         # based on the paper
         N = len(X)
@@ -106,7 +107,7 @@ def create_hill_climber(X, bandwidth, fast=True, ret_histroy=False):
 
         return climb_till_end
 
-    def fast_climb_till_end(x, approx=None):
+    def fast_climb_till_end(x, approx=None, precision=1e-8):
         nonlocal call_cnt
 
         call_cnt += 1
@@ -152,7 +153,7 @@ def create_hill_climber(X, bandwidth, fast=True, ret_histroy=False):
             current, current_dense = next, next_dense
             # current = next
 
-            if d < 1e-8:
+            if d < precision:
                 # this is quite controversial
                 break
 
@@ -174,6 +175,7 @@ def denclue(X, bandwidth, sample_size=-1):
     hill_climber = create_hill_climber(X, bandwidth)
     shuffled_X = list(X)
     shuffle(shuffled_X)
+    centroids_list = shuffled_X[:sample_size]
 
     if sample_size == -1:
         # default is 10%
@@ -185,12 +187,34 @@ def denclue(X, bandwidth, sample_size=-1):
         # the best bet we have is to round first and format to string after
         return tuple(map(lambda x: format(round(x, 5), '.5f'), l))
 
-    summits = parmap(lambda x: format_list(hill_climber(x)),
-                     shuffled_X[:sample_size])
-    centroids = Counter(summits)
+    def climb(points, precision):
+        climber = partial(hill_climber, precision=precision)
+        summits = parmap(climber, points)
+        return summits
 
-    centroids_list = list(map(lambda x: np.array(list(map(float, x))), centroids))
+    def group(points):
+        points = map(format_list, points)
+        centroids = Counter(points)
+        centroids_list = list(map(lambda x: np.array(list(map(float, x))), centroids))
+        return centroids_list
+
+    start = -4
+    end = -8
+    cnt = 5
+
+    start_time = time.time()
+    for i, precision in enumerate(np.logspace(start, end, num=cnt)):
+        # stepping up precision, and grouping summits together
+        # this will really reduce the runtime
+        centroids_list = climb(centroids_list, precision)
+        centroids_list = group(centroids_list)
+        print('precision:', precision)
+        print('centroid_cnt:', len(centroids_list))
+    end_time = time.time()
+
+    print('time elapsed:', end_time - start_time)
+
     # centroids_list.sort(key=lambda x: x[0])
-    # print('centroid_list:', centroids_list)
+
 
     return centroids_list
