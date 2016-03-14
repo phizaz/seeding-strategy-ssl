@@ -2,51 +2,59 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
-dataset = 'yeast'
+dataset = 'pendigits'
 with open('results/badness_on_many_seeding-' + dataset + '.json') as file:
     result = json.load(file)
 
 fig, axes = plt.subplots(ncols=2)
 
-def plot(ax, sort=lambda x: x[0]):
-    acc_kmeans_1 = list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_1']))
-    acc_kmeans_3 = list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_3']))
-    badness_l_method_md = list(map(lambda x: x['md'], result['badness']))
-    badness_denclue_md = list(map(lambda x: x['md'], result['badness_denclue']))
-    badness_denclue_weighted_md = list(map(lambda x: x['md'], result['badness_denclue_weighted']))
-    badness_naive_md = list(map(lambda x: x['md'], result['badness_naive']))
-    names = result['name']
+def plot(ax, sort_fn):
 
-    seq = list(zip(acc_kmeans_1,
-                   acc_kmeans_3,
-                   badness_l_method_md,
-                   badness_denclue_md,
-                   badness_denclue_weighted_md,
-                   badness_naive_md,
-                   names))
-    seq.sort(key=sort)
+    data = {
+        'acc_kmeans_1':
+            list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_1'])),
+        'acc_kmeans_3':
+            list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_3'])),
+        'badness_l_method_md':
+            list(map(lambda x: x['md'], result['badness_l_method'])),
+        'badness_l_method_weighted_md':
+            list(map(lambda x: x['md'], result['badness_l_method_weighted'])),
+        'badness_denclue_md':
+            list(map(lambda x: x['md'], result['badness_denclue'])),
+        'badness_denclue_weighted_md':
+            list(map(lambda x: x['md'], result['badness_denclue_weighted'])),
+        'badness_naive_md':
+            list(map(lambda x: x['md'], result['badness_naive'])),
+        'names': result['name'],
+    }
 
-    acc_kmeans_1,\
-    acc_kmeans_3,\
-    badness_l_method_md,\
-    badness_denclue_md, \
-    badness_denclue_weighted_md, \
-    badness_naive_md,\
-    names = \
-        zip(*seq)
+    # transpose the dictionary
+    keys = data.keys()
+    seq = []
+    for values in zip(*data.values()):
+        seq.append(dict(zip(keys, values)))
+
+    # sort by sort_fn
+    seq.sort(key=sort_fn)
+
+    # transpose it back!
+    sorted_data_wo_keys = list(map(lambda x: x.values(), seq))
+    sorted_data = dict(zip(keys, zip(*sorted_data_wo_keys)))
 
     # Example data
-    x = range(len(names))
+    cnt = len(sorted_data['names'])
+    x = range(cnt)
 
-    ax.plot(x, acc_kmeans_1, 'k--', label='acc kmeans c*1')
-    ax.plot(x, acc_kmeans_3, 'k--', color="blue", label='acc kmeans c*3')
-    ax.plot(x, badness_l_method_md, 'k', color="red", label='bad l_method')
-    ax.plot(x, badness_denclue_md, 'k', color="blue", label='bad kde')
-    ax.plot(x, badness_denclue_weighted_md, 'k', color="green", label='bad kde weighted')
-    ax.plot(x, badness_naive_md, 'k', label='bad naive')
+    col = sorted_data
+    ax.plot(x, col['acc_kmeans_1'], 'k--', label='acc kmeans c*1')
+    ax.plot(x, col['acc_kmeans_3'], 'k--', color="blue", label='acc kmeans c*3')
+    ax.plot(x, col['badness_l_method_md'], 'k', color="red", label='bad l_method')
+    ax.plot(x, col['badness_denclue_md'], 'k', color="blue", label='bad kde')
+    ax.plot(x, col['badness_denclue_weighted_md'], 'k', color="green", label='bad kde weighted')
+    ax.plot(x, col['badness_naive_md'], 'k', label='bad naive')
 
     plt.sca(ax)
-    plt.xticks(range(len(names)), names, rotation=90)
+    plt.xticks(range(cnt), col['names'], rotation=90)
 
     legend = ax.legend(loc='upper right', shadow=True)
     # Now add the legend with some customizations.
@@ -61,8 +69,8 @@ def plot(ax, sort=lambda x: x[0]):
     for label in legend.get_lines():
         label.set_linewidth(1.5)  # the legend line width
 
-plot(axes[0], lambda x: x[0])
-plot(axes[1], lambda x: x[1])
+plot(axes[0], lambda x: x['acc_kmeans_1'])
+plot(axes[1], lambda x: x['acc_kmeans_3'])
 
 plt.subplots_adjust(bottom=0.3)
 
