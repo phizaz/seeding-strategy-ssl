@@ -244,7 +244,7 @@ def badness_agglomeratvie_l_method(prepare=False, name=None):
                 .y(y) \
                 .pipe(agglomerative_l_method()) \
                 .connect(stop())
-            
+
             if not 'centroids' in result:
                 raise Exception('no centroids in pipe')
 

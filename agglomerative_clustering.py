@@ -21,6 +21,10 @@ def agglomerative_clutering(X, max_merge_dist):
     merge_hist = linkage(X, method='ward', metric='euclidean', preserve_input=True)
 
     disjoint = DisjointSet(len(X))
+    
+    # _, _, merge_dists, _ = list(zip(*merge_hist))
+    # print('merge_dists:', merge_dists)
+
     for a, b, merge_dist, _ in merge_hist:
         if merge_dist > max_merge_dist:
             break

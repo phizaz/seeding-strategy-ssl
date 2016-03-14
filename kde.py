@@ -9,6 +9,7 @@ from random import shuffle
 from parmap import parmap
 from collections import Counter
 from functools import partial
+from agglomerative_clustering import agglomerative_clutering
 
 def kernel(x):
     d = len(x)
@@ -183,22 +184,17 @@ def denclue(X, bandwidth, sample_size=-1):
 
     print('sample_size:', sample_size)
 
-    def format_list(l):
-        # the best bet we have is to round first and format to string after
-        return tuple(map(lambda x: format(round(x, 5), '.5f'), l))
-
     def climb(points, precision):
         climber = partial(hill_climber, precision=precision)
         summits = parmap(climber, points)
         return summits
 
-    def group(points):
-        points = map(format_list, points)
-        centroids = Counter(points)
-        centroids_list = list(map(lambda x: np.array(list(map(float, x))), centroids))
-        return centroids_list
+    def group(points, max_merge_dist):
+        centroids, _ = agglomerative_clutering(points, max_merge_dist)
+        return centroids
 
-    start = -4
+    # might not work for some cases
+    start = -1
     end = -8
     cnt = 5
 
@@ -207,7 +203,8 @@ def denclue(X, bandwidth, sample_size=-1):
         # stepping up precision, and grouping summits together
         # this will really reduce the runtime
         centroids_list = climb(centroids_list, precision)
-        centroids_list = group(centroids_list)
+        # 1e-3 is totally an arbitrary number
+        centroids_list = group(centroids_list, 1e-3)
         print('precision:', precision)
         print('centroid_cnt:', len(centroids_list))
     end_time = time.time()
