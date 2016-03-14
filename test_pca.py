@@ -5,7 +5,7 @@ import matplotlib.cm as cmx
 import matplotlib.colors as colors
 from cache import StorageCache
 
-dataset = get_letter()
+dataset = get_iris()
 # print('bandwidth:', dataset.get_bandwidth(force=True))
 
 pca = PCA(n_components=2)
@@ -56,7 +56,7 @@ for i, (name, points) in zip(range(dataset.cluster_cnt), group.items()):
 #
 # plot(centroids, color='red')
 
-cache = StorageCache('seeding/' + dataset.name + '_prob-0.03.json')
+cache = StorageCache('seeding/' + dataset.name + '_prob-0.05.json')
 seeds = cache.get()
 seeds = list(map(lambda x: x[1],
                  filter(lambda x: x[0],

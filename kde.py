@@ -212,9 +212,6 @@ def denclue(X, bandwidth, sample_size=-1):
         print('centroid_cnt:', len(centroids_list))
     end_time = time.time()
 
-    print('time elapsed:', end_time - start_time)
-
-    # centroids_list.sort(key=lambda x: x[0])
-
+    print('denclue time elapsed:', end_time - start_time)
 
     return centroids_list

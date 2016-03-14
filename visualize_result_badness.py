@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 
-dataset = 'letter'
+dataset = 'yeast'
 with open('results/badness_on_many_seeding-' + dataset + '.json') as file:
     result = json.load(file)
 
@@ -13,6 +13,7 @@ def plot(ax, sort=lambda x: x[0]):
     acc_kmeans_3 = list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_3']))
     badness_l_method_md = list(map(lambda x: x['md'], result['badness']))
     badness_denclue_md = list(map(lambda x: x['md'], result['badness_denclue']))
+    badness_denclue_weighted_md = list(map(lambda x: x['md'], result['badness_denclue_weighted']))
     badness_naive_md = list(map(lambda x: x['md'], result['badness_naive']))
     names = result['name']
 
@@ -20,11 +21,19 @@ def plot(ax, sort=lambda x: x[0]):
                    acc_kmeans_3,
                    badness_l_method_md,
                    badness_denclue_md,
+                   badness_denclue_weighted_md,
                    badness_naive_md,
                    names))
     seq.sort(key=sort)
 
-    acc_kmeans_1, acc_kmeans_3, badness_l_method_md, badness_denclue_md, badness_naive_md, names = zip(*seq)
+    acc_kmeans_1,\
+    acc_kmeans_3,\
+    badness_l_method_md,\
+    badness_denclue_md, \
+    badness_denclue_weighted_md, \
+    badness_naive_md,\
+    names = \
+        zip(*seq)
 
     # Example data
     x = range(len(names))
@@ -33,6 +42,7 @@ def plot(ax, sort=lambda x: x[0]):
     ax.plot(x, acc_kmeans_3, 'k--', color="blue", label='acc kmeans c*3')
     ax.plot(x, badness_l_method_md, 'k', color="red", label='bad l_method')
     ax.plot(x, badness_denclue_md, 'k', color="blue", label='bad kde')
+    ax.plot(x, badness_denclue_weighted_md, 'k', color="green", label='bad kde weighted')
     ax.plot(x, badness_naive_md, 'k', label='bad naive')
 
     plt.sca(ax)

@@ -149,32 +149,80 @@ def badness_denclue(bandwidth=None, prepare=False, name=None):
                 cache.update(array_to_list(centroids))
                 cache.save()
 
-        return inst.set('good_centroids_denclue', centroids)
+        # weights (prerequisite for weighted mode
+        density_fn = create_density_fn(x, bandwidth)
+        weights = list(map(density_fn, centroids))
 
-    def fn(inst):
-        x, y_seed, good_centroids = requires(['x', 'y_seed', 'good_centroids_denclue'], inst)
+        return inst\
+            .set('denclue_centroids', centroids)\
+            .set('denclue_bandwidth', bandwidth)\
+            .set('denclue_weights', weights)
 
-        # build seeding list
-        seeding = list(map(lambda x: x[0],
-                           filter(lambda a: a[1] is not None,
-                                  zip(x, y_seed))))
+    def run(mode='normal'):
 
-        if len(seeding) == len(x):
-            raise Exception('you probably seed with 100%')
+        def normal(inst):
+            x,\
+            y_seed,\
+            good_centroids\
+                = requires(['x',
+                            'y_seed',
+                            'denclue_centroids'],
+                           inst)
 
-        badness = {
-            'rmsd': rmsd_nearest_from_centroids(seeding, good_centroids),
-            'md': md_nearest_from_centroids(seeding, good_centroids),
+            # build seeding list
+            seeding = list(map(lambda x: x[0],
+                               filter(lambda a: a[1] is not None,
+                                      zip(x, y_seed))))
+
+            if len(seeding) == len(x):
+                raise Exception('you probably seed with 100%')
+
+            badness = {
+                'rmsd': rmsd_nearest_from_centroids(seeding, good_centroids),
+                'md': md_nearest_from_centroids(seeding, good_centroids),
+            }
+
+            # print('badness_denclue:', badness)
+
+            return inst.set('badness_denclue', badness)
+
+        def weighted(inst):
+            x, \
+            y_seed, \
+            good_centroids, \
+            weights \
+                = requires(['x',
+                            'y_seed',
+                            'denclue_centroids',
+                            'denclue_weights'],
+                           inst)
+
+            # build seeding list
+            seeding = list(map(lambda x: x[0],
+                               filter(lambda a: a[1] is not None,
+                                      zip(x, y_seed))))
+
+            if len(seeding) == len(x):
+                raise Exception('you probably seed with 100%')
+
+            badness = {
+                'md': md_weighted_nearest_from_centroids(seeding, good_centroids, weights)
+            }
+
+            return inst.set('badness_denclue_weighted', badness)
+
+        modes = {
+            'normal': normal,
+            'weighted': weighted,
         }
 
-        #print('badness_denclue:', badness)
+        return modes[mode]
 
-        return inst.set('badness_denclue', badness)
 
     if prepare:
         return prepare_fn
     else:
-        return fn
+        return run
 
 def badness_agglomeratvie_l_method(prepare=False, name=None):
     # with a given name it will cache
@@ -190,14 +238,13 @@ def badness_agglomeratvie_l_method(prepare=False, name=None):
         if 'cache' in locals() and not cache.isnew():
             centroids = np.array(cache.get())
         else:
-
-
             # get the 'good' centroids
             result = Pipe() \
                 .x(x) \
                 .y(y) \
                 .pipe(agglomerative_l_method()) \
                 .connect(stop())
+            
             if not 'centroids' in result:
                 raise Exception('no centroids in pipe')
 

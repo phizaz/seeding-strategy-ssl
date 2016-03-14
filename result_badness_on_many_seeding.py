@@ -11,12 +11,12 @@ datasets = [
     get_iris(),
     get_pendigits(),
     get_yeast(),
-    get_satimage(),
-    get_banknote(),
+    # get_satimage(),
+    # get_banknote(),
     # get_eeg(), # is not suitable for SSL
     # get_spam(), # prone to imbalanced problem
-    get_letter(), # large dataset
-    get_magic(), # super slow for kde hill climbing
+    # get_letter(), # large dataset
+    # get_magic(), # super slow for kde hill climbing
 ]
 
 def kmeans_ssl(clusters, neighbors, field):
@@ -101,13 +101,15 @@ def run_and_save(dataset):
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_agglomeratvie_l_method()) \
-                .pipe(badness_denclue()) \
+                .pipe(badness_denclue(prepare=False)(mode='normal')) \
+                .pipe(badness_denclue(prepare=False)(mode='weighted')) \
                 .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
                 .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
             .merge('result', group('evaluation_kmeans_1',
                                    'evaluation_kmeans_3',
                                    'badness',
                                    'badness_denclue',
+                                   'badness_denclue_weighted',
                                    'badness_naive',
                                    'name')) \
             .connect(stop())
@@ -122,7 +124,8 @@ def run_and_save(dataset):
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_agglomeratvie_l_method()) \
-                .pipe(badness_denclue()) \
+                .pipe(badness_denclue(prepare=False)(mode='normal')) \
+                .pipe(badness_denclue(prepare=False)(mode='weighted')) \
                 .split(10, cross('y_seed')) \
                     .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
                     .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
@@ -131,6 +134,7 @@ def run_and_save(dataset):
                                    'evaluation_kmeans_3',
                                    'badness',
                                    'badness_denclue',
+                                   'badness_denclue_weighted',
                                    'badness_naive',
                                    'name')) \
             .connect(stop())
