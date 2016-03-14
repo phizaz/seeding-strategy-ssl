@@ -38,7 +38,11 @@ def plot(ax, sort_fn):
     seq.sort(key=sort_fn)
 
     # transpose it back!
-    sorted_data_wo_keys = list(map(lambda x: x.values(), seq))
+    def dict_to_list(d, order):
+        l = [d[o] for o in order]
+        return l
+    sorted_data_wo_keys = list(map(lambda d: dict_to_list(d, keys),
+                                   seq))
     sorted_data = dict(zip(keys, zip(*sorted_data_wo_keys)))
 
     # Example data
@@ -48,10 +52,11 @@ def plot(ax, sort_fn):
     col = sorted_data
     ax.plot(x, col['acc_kmeans_1'], 'k--', label='acc kmeans c*1')
     ax.plot(x, col['acc_kmeans_3'], 'k--', color="blue", label='acc kmeans c*3')
-    ax.plot(x, col['badness_l_method_md'], 'k', color="red", label='bad l_method')
-    ax.plot(x, col['badness_denclue_md'], 'k', color="blue", label='bad kde')
-    ax.plot(x, col['badness_denclue_weighted_md'], 'k', color="green", label='bad kde weighted')
-    ax.plot(x, col['badness_naive_md'], 'k', label='bad naive')
+    ax.plot(x, col['badness_l_method_md'], 'k', color="red", label='l_method')
+    ax.plot(x, col['badness_l_method_weighted_md'], 'k', color="orange", label='l_method+w')
+    ax.plot(x, col['badness_denclue_md'], 'k', color="blue", label='kde')
+    ax.plot(x, col['badness_denclue_weighted_md'], 'k', color="cyan", label='kde+w')
+    ax.plot(x, col['badness_naive_md'], 'k', label='naive')
 
     plt.sca(ax)
     plt.xticks(range(cnt), col['names'], rotation=90)
