@@ -19,10 +19,14 @@ def plot(ax, sort_fn):
             list(map(lambda x: x['md'], result['badness_l_method'])),
         'badness_l_method_weighted_md':
             list(map(lambda x: x['md'], result['badness_l_method_weighted'])),
+        'badness_l_method_weighted_voronoid_filling':
+            list(map(lambda x: x['voronoid_filling'], result['badness_l_method_weighted'])),
         'badness_denclue_md':
             list(map(lambda x: x['md'], result['badness_denclue'])),
         'badness_denclue_weighted_md':
             list(map(lambda x: x['md'], result['badness_denclue_weighted'])),
+        'badness_denclue_weighted_voronoid_filling':
+            list(map(lambda x: x['voronoid_filling'], result['badness_denclue_weighted'])),
         'badness_naive_md':
             list(map(lambda x: x['md'], result['badness_naive'])),
         'names': result['name'],
@@ -50,18 +54,20 @@ def plot(ax, sort_fn):
     x = range(cnt)
 
     col = sorted_data
-    ax.plot(x, col['acc_kmeans_1'], 'k--', label='acc kmeans c*1')
-    ax.plot(x, col['acc_kmeans_3'], 'k--', color="blue", label='acc kmeans c*3')
-    ax.plot(x, col['badness_l_method_md'], 'k', color="red", label='l_method')
-    ax.plot(x, col['badness_l_method_weighted_md'], 'k', color="orange", label='l_method+w')
+    ax.plot(x, col['acc_kmeans_1'], 'k--', label='acc c*1')
+    ax.plot(x, col['acc_kmeans_3'], 'k--', color="blue", label='acc c*3')
+    ax.plot(x, col['badness_l_method_md'], 'k', color="red", label='l')
+    ax.plot(x, col['badness_l_method_weighted_md'], 'k', color="orange", label='l+w')
+    ax.plot(x, col['badness_l_method_weighted_voronoid_filling'], 'k', color="yellow", label='l+w+vl')
     ax.plot(x, col['badness_denclue_md'], 'k', color="blue", label='kde')
     ax.plot(x, col['badness_denclue_weighted_md'], 'k', color="cyan", label='kde+w')
+    ax.plot(x, col['badness_denclue_weighted_voronoid_filling'], 'k', color="green", label='kde+w+vl')
     ax.plot(x, col['badness_naive_md'], 'k', label='naive')
 
     plt.sca(ax)
     plt.xticks(range(cnt), col['names'], rotation=90)
 
-    legend = ax.legend(loc='upper right', shadow=True)
+    legend = ax.legend(loc='upper left', shadow=True)
     # Now add the legend with some customizations.
     # The frame is matplotlib.patches.Rectangle instance surrounding the legend.
     frame = legend.get_frame()

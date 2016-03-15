@@ -10,8 +10,8 @@ from cache import StorageCache
 datasets = [
     get_iris(),
     get_pendigits(),
-    get_yeast(),
-    get_satimage(),
+    # get_yeast(),
+    # get_satimage(),
     # get_banknote(),
     # get_eeg(), # is not suitable for SSL
     # get_spam(), # prone to imbalanced problem

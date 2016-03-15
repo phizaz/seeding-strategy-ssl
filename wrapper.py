@@ -200,7 +200,8 @@ def badness_denclue(bandwidth=None, prepare=False, name=None):
             weights = get_centroid_weights(x, centroids)
 
             badness = {
-                'md': md_weighted_nearest_from_centroids(seeding, centroids, weights)
+                'md': md_weighted_nearest_from_centroids(seeding, centroids, weights),
+                'voronoid_filling': voronoid_filling(seeding, centroids, weights)
             }
 
             return inst.set('badness_denclue_weighted', badness)
@@ -287,6 +288,7 @@ def badness_agglomeratvie_l_method(prepare=False, name=None):
 
             badness = {
                 'md': md_weighted_nearest_from_centroids(seeding, centroids, weights),
+                'voronoid_filling': voronoid_filling(seeding, centroids, weights),
             }
 
             return inst.set('badness_l_method_weighted', badness)

@@ -17,8 +17,6 @@ class Dataset:
         self.cluster_cnt = self.count_cluster()
         self.K_for_KNN = self.calculate_K_for_KNN()
         self.bandwidth = self.get_bandwidth()
-        # testinggg
-        # self.bandwidth *= 2
 
     def count_cluster(self):
         counter = Counter(self.Y)

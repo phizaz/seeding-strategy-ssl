@@ -29,3 +29,21 @@ def md_weighted_nearest_from_centroids(seeding, centroids, weights):
     sum_weighted_dist = sum(d[0] * weight for d, weight in zip(dist, weights))
     mean = sum_weighted_dist / sum_weight
     return mean
+
+def voronoid_filling(seeding, centroids, weights):
+    assert len(centroids) == len(weights)
+
+    ball_tree = BallTree(centroids)
+    _, indexes = ball_tree.query(seeding)
+    filled_centroids = set()
+
+    sum_weights = sum(weights)
+    badness = sum_weights
+    for idx, in indexes:
+        if idx in filled_centroids:
+            continue
+
+        filled_centroids.add(idx)
+        badness -= weights[idx]
+
+    return badness / sum_weights
