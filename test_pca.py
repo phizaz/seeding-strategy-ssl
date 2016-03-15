@@ -30,7 +30,7 @@ def get_cmap(N):
     # return static
 
 
-cmap = get_cmap(dataset.cluster_cnt)
+cmap = get_cmap(dataset.cluster_cnt + 1)
 print('cluster_cnt:', dataset.cluster_cnt)
 
 def plot(X, **kwargs):
@@ -50,17 +50,17 @@ for i, (name, points) in zip(range(dataset.cluster_cnt), group.items()):
     print('count:', len(points))
     plot(points, color=cmap(i))
 
-cache = StorageCache('storage/centroids_iris_denclue_bandwidth_0.1082972972972973.json')
-centroids = np.array(cache.get())
-centroids = pca.transform(centroids)
-plot(centroids, color='black')
-
-cache = StorageCache('seeding/' + dataset.name + '_prob-0.05.json')
+cache = StorageCache('seeding/' + dataset.name + '_some-1-prob-0.1.json')
 seeds = cache.get()
 seeds = list(map(lambda x: x[1],
                  filter(lambda x: x[0],
                         zip(seeds, dataset.X))))
 seeds = pca.transform(seeds)
-plot(seeds, color='green')
+plot(seeds, color='grey')
+
+cache = StorageCache('storage/centroids_iris_denclue_bandwidth_0.1082972972972973.json')
+centroids = np.array(cache.get())
+centroids = pca.transform(centroids)
+plot(centroids, color='black')
 
 plt.show()

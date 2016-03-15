@@ -13,7 +13,7 @@ from operator import itemgetter
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cross_validation import cross_val_score
 import json
-
+from sklearn.neighbors import BallTree
 
 def load_data(file, delimiter=','):
     result = []
@@ -179,3 +179,12 @@ def requires(request, dict):
         result.append(dict[field])
 
     return result
+
+def get_centroid_weights(X, centroids):
+    ball_tree = BallTree(centroids)
+    dist, indexes = ball_tree.query(X)
+    weights = [0 for i in centroids]
+    for idx in indexes:
+        weights[idx] += 1
+
+    return weights

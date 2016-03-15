@@ -10,6 +10,7 @@ from parmap import parmap
 from collections import Counter
 from functools import partial
 from agglomerative_clustering import agglomerative_clutering
+from l_method import agglomerative_l_method
 
 def kernel(x):
     d = len(x)
@@ -170,17 +171,13 @@ def create_hill_climber(X, bandwidth, fast=True, ret_histroy=False):
     else:
         return normal_climber
 
-def denclue(X, bandwidth, sample_size=-1):
+def denclue(X, bandwidth, sample_size):
     # sample is the number of points (ratio) to be climbing to the summit
     # most cases 10% is more than enough, since climbing is a very expensive process
     hill_climber = create_hill_climber(X, bandwidth)
     shuffled_X = list(X)
     shuffle(shuffled_X)
     centroids_list = shuffled_X[:sample_size]
-
-    if sample_size == -1:
-        # default is 10%
-        sample_size = len(X) * 0.1
 
     print('sample_size:', sample_size)
 
