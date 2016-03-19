@@ -93,18 +93,18 @@ def plot(ax, sort_fn):
     plt.sca(ax)
     plt.xticks(range(cnt), col['names'], rotation=90)
 
-    legend = ax.legend(loc='lower center', shadow=True)
-    # Now add the legend with some customizations.
-    # The frame is matplotlib.patches.Rectangle instance surrounding the legend.
-    frame = legend.get_frame()
-    frame.set_facecolor('0.90')
-
-    # Set the fontsize
-    for label in legend.get_texts():
-        label.set_fontsize('small')
-
-    for label in legend.get_lines():
-        label.set_linewidth(1.5)  # the legend line width
+    # legend = ax.legend(loc='lower center', shadow=True)
+    # # Now add the legend with some customizations.
+    # # The frame is matplotlib.patches.Rectangle instance surrounding the legend.
+    # frame = legend.get_frame()
+    # frame.set_facecolor('0.90')
+    #
+    # # Set the fontsize
+    # for label in legend.get_texts():
+    #     label.set_fontsize('small')
+    #
+    # for label in legend.get_lines():
+    #     label.set_linewidth(1.5)  # the legend line width
 
 plot(axes[0], lambda x: x['acc_kmeans_1'])
 plot(axes[1], lambda x: x['acc_kmeans_3'])

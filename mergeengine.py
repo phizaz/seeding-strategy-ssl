@@ -6,9 +6,24 @@ class Node:
         self.merge_dist = 0
         self.weight = 1
 
+        self.sum_acc = None
+
         self.parent = None
         self.left = None
         self.right = None
+
+    def is_root(self):
+        return self.parent is None
+
+    def sum_acc_to_root(self):
+        if self.is_root():
+            self.sum_acc = self.left_acc + self.right_acc
+
+        if self.sum_acc is None:
+            self.sum_acc = self.left_acc + self.right_acc \
+                           + self.parent.sum_acc_to_root()
+
+        return self.sum_acc
 
     def set_left(self, node):
         self.left = node

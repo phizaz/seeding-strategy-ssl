@@ -8,8 +8,8 @@ import numpy as np
 from cache import StorageCache
 
 datasets = [
-    get_iris(),
-    # get_pendigits(),
+    # get_iris(),
+    get_pendigits(),
     # get_yeast(),
     # get_satimage(),
     # get_banknote(),
@@ -85,7 +85,7 @@ def seeder(seeding_fns, seeding_names, name):
 def create_voronoid_badnesses():
     params = []
     names = []
-    space = np.linspace(0.01, 0.1, 10)
+    space = np.linspace(0.03, 0.07, 10)
 
     for c in space:
         params.append(c)
@@ -119,6 +119,7 @@ def run_and_save(dataset):
             .pipe(badness_naive(prepare=True)) \
             .pipe(badness_agglomeratvie_l_method(prepare=True, name=dataset.name)) \
             .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True, name=dataset.name)) \
+            .pipe(badness_hierarchical_voronoid_filling(prepare=True))\
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_agglomeratvie_l_method()(mode='weighted')) \
@@ -147,6 +148,7 @@ def run_and_save(dataset):
             .pipe(badness_naive(prepare=True)) \
             .pipe(badness_agglomeratvie_l_method(prepare=True, name=dataset.name)) \
             .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True, name=dataset.name)) \
+            .pipe(badness_hierarchical_voronoid_filling(prepare=True))\
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_agglomeratvie_l_method()(mode='weighted')) \

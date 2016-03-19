@@ -4,7 +4,7 @@ from wrapper import *
 from badness import *
 from ssltools import *
 
-dataset = get_iris()
+dataset = get_pendigits()
 pipe = Pipe() \
     .x(dataset.X) \
     .y(dataset.Y) \
@@ -17,6 +17,7 @@ seeding = list(map(lambda xy: xy[0],
                    filter(lambda xy: xy[1] is not None,
                           zip(dataset.X, y_seed))))
 
-badness = hierarchical_voronoid_filling(seeding, dataset.X)
+badness_engine = HierarchicalVoronoidFilling(dataset.X)
+badness = badness_engine.run(seeding, c=0.03)
 
 print('badness:', badness)
