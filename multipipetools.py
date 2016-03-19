@@ -109,7 +109,18 @@ def group(*fields):
             for idx, field in enumerate(fields):
                 storage[field].append(vals[idx])
 
-        print('storage:', storage)
+        # print('storage:', storage)
 
         return storage
+    return fn
+
+def flat_group(field):
+    def fn(insts):
+        result = []
+        for inst in insts:
+            val = requires(field, inst)
+            result.append(val)
+
+        return result
+
     return fn

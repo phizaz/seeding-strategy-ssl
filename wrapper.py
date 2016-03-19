@@ -305,6 +305,18 @@ def badness_agglomeratvie_l_method(prepare=False, name=None):
     else:
         return run
 
+def badness_hierarchical_voronoid_filling():
+    def fn(inst):
+        x, y_seed, c = requires(['x', 'y_seed', 'voronoid_c'], inst)
+        seeding = list(map(lambda xy: xy[0],
+                           filter(lambda xy: xy[1] is not None,
+                                  zip(x, y_seed))))
+
+        return inst.set('badness_hierarchical_voronoid_filling',
+                        hierarchical_voronoid_filling(seeding, x, c))
+
+    return fn
+
 def badness_naive(prepare=False):
     def prepare_fn(inst):
         # get good centroids

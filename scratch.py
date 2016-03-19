@@ -1,35 +1,32 @@
-testdata
+import math
 
-begin()
-    .x(points)
-    .y(labels)
-    .pipe(split_cross(10)) --> (use 'x' and/or 'y') into N pipes with N xs and ys
-        .pipe(svm())
-        .pipe(result())
-    .pipe(merge_average()) -->
-    .end()
+def series(r, length):
+    for i in range(length):
+        yield math.pow(1-r, i) * r
 
+def find(length, target=1):
+    low = 0
+    high = 1
 
-begin()
-    .x(train_points)
-    .y(train_labels)
-    .pipe(svm()) --> (use 'x' and 'y') mark 'model'
-    .x(test_points)
-    .pipe(predict()) --> (use 'model' and 'x') mark 'prediction'
-    .y(test_labels)
-    .pipe(evaluate()) --> (use 'prediction' and 'y') mark 'evaluation'
+    precision = 1e-14
 
+    while True:
+        mid = (low + high) / 2
 
-begin()
-    .x(points)
-    .y(labels)
-    .split(5, split_parallel())
-        .y(random_getter('y', 0.1))
-        .pipe(kmeans(K=10, times=5)) --> (use 'x') mark 'model'
-        .y(consensus()) --> (use 'model' and 'y') mark 'y'
-        .pipe(knn(K=3)) --> (use 'x' and 'y') mark 'model'
-        .pipe(split_cross(5))
-            .pipe(predict()) --> (use 'x' and 'model') mark 'prediction'
-            .pipe(evaluate()) --> (use 'prediction' and 'y') mark 'evaluation'
-        .pipe(merge(average())) --> (use 'evaluation') mark 'evaluation'
-    .merge(merge(average())) --> (use 'evaluation') mark 'evaluation'
+        # s = list(series(mid, length))
+        # print('mid:', mid)
+        # print('series:', s)
+
+        sum_series = sum(series(mid, length))
+        # print('sum:', sum_series)
+
+        if abs(sum_series - target) < precision:
+            return mid
+        elif sum_series > target:
+            high = mid
+        else:
+            low = mid
+
+result = find(50, 1)
+
+print('result:', result)

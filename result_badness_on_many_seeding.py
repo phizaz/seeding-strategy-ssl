@@ -1,7 +1,7 @@
 from concurrent.futures import ProcessPoolExecutor
 
 from dataset import *
-from multipipetools import total, group, cross
+from multipipetools import *
 from ssltools import *
 from wrapper import *
 import numpy as np
@@ -9,7 +9,7 @@ from cache import StorageCache
 
 datasets = [
     get_iris(),
-    get_pendigits(),
+    # get_pendigits(),
     # get_yeast(),
     # get_satimage(),
     # get_banknote(),
@@ -82,12 +82,33 @@ def seeder(seeding_fns, seeding_names, name):
 
     return map_fn
 
+def create_voronoid_badnesses():
+    params = []
+    names = []
+    space = np.linspace(0.01, 0.1, 10)
+
+    for c in space:
+        params.append(c)
+        names.append('c-' + str(c))
+
+    return params, names
+
+def voronoid_badnesses(params, names):
+    def map_fn(inst, idx, total):
+        # print('c:', params[idx])
+        return inst.set('voronoid_c', params[idx])
+
+    return map_fn
+
 def run_and_save(dataset):
     print('dataset:', dataset.name)
     print('has_testdata:', dataset.has_testdata())
 
     seeding_fns, seeding_names = create_seeding_fns(dataset)
     print('seeding_names:', seeding_names)
+
+    voronoid_params, voronoid_names = create_voronoid_badnesses()
+    print('voronoid_params:', voronoid_params)
 
     def normal():
         return Pipe() \
@@ -100,18 +121,21 @@ def run_and_save(dataset):
             .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True, name=dataset.name)) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
-                .pipe(badness_agglomeratvie_l_method()(mode='normal')) \
                 .pipe(badness_agglomeratvie_l_method()(mode='weighted')) \
-                .pipe(badness_denclue()(mode='normal')) \
                 .pipe(badness_denclue()(mode='weighted')) \
+                .split(len(voronoid_params), voronoid_badnesses(voronoid_params, voronoid_names))\
+                    .pipe(badness_hierarchical_voronoid_filling())\
+                .merge(['badness_hierarchical_voronoid_filling',
+                        'voronoid_c'],
+                       flat_group('badness_hierarchical_voronoid_filling'),
+                       flat_group('voronoid_c'))\
                 .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
                 .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
             .merge('result', group('evaluation_kmeans_1',
                                    'evaluation_kmeans_3',
-                                   'badness_l_method',
                                    'badness_l_method_weighted',
-                                   'badness_denclue',
                                    'badness_denclue_weighted',
+                                   'badness_hierarchical_voronoid_filling',
                                    'badness_naive',
                                    'name')) \
             .connect(stop())
@@ -125,21 +149,25 @@ def run_and_save(dataset):
             .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True, name=dataset.name)) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
-                .pipe(badness_agglomeratvie_l_method()(mode='normal')) \
                 .pipe(badness_agglomeratvie_l_method()(mode='weighted')) \
-                .pipe(badness_denclue()(mode='normal')) \
                 .pipe(badness_denclue()(mode='weighted')) \
+                .split(len(voronoid_params), voronoid_badnesses(voronoid_params, voronoid_names))\
+                    .pipe(badness_hierarchical_voronoid_filling())\
+                .merge(['badness_hierarchical_voronoid_filling',
+                        'voronoid_c'],
+                       flat_group('badness_hierarchical_voronoid_filling'),
+                       flat_group('voronoid_c'))\
                 .split(10, cross('y_seed')) \
                     .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
                     .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
                 .merge(['evaluation_kmeans_1', 'evaluation_kmeans_3'], total('evaluation_kmeans_1'), total('evaluation_kmeans_3')) \
             .merge('result', group('evaluation_kmeans_1',
                                    'evaluation_kmeans_3',
-                                   'badness_l_method',
                                    'badness_l_method_weighted',
-                                   'badness_denclue',
                                    'badness_denclue_weighted',
+                                   'badness_hierarchical_voronoid_filling',
                                    'badness_naive',
+                                   'voronoid_c',
                                    'name')) \
             .connect(stop())
 
