@@ -13,11 +13,7 @@ pipe = Pipe() \
 y_seed = pipe['y_seed']
 print('y_seed:', y_seed)
 
-seeding = list(map(lambda xy: xy[0],
-                   filter(lambda xy: xy[1] is not None,
-                          zip(dataset.X, y_seed))))
-
-badness_engine = HierarchicalVoronoidFilling(dataset.X)
-badness = badness_engine.run(seeding, c=0.003)
+badness_engine = MajorityVoronoid(dataset.X)
+badness = badness_engine.run(y_seed)
 
 print('badness:', badness)

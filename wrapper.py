@@ -27,6 +27,27 @@ def kmeans(n_clusters=8, n_init=10):
 
     return fn
 
+def kmeans_predict():
+    def fn(inst):
+        x, y, x_test, prediction = requires(['x', 'y', 'x_test', 'prediction'], inst)
+        kmeans = requires('model', inst)
+        groups = set(prediction)
+
+        group_to_label = dict(zip(groups, [None for i in range(len(groups))]))
+
+        for y, group in zip(y, prediction):
+            if group_to_label[group] is not None:
+                continue
+
+            group_to_label[group] = y
+
+        groups = kmeans.predict(x_test)
+        result = list(map(lambda group: group_to_label[group], groups))
+
+        return inst.set('prediction', result)
+
+    return fn
+
 def knn(*args, **margs):
     def fn(inst):
         x, y = requires(['x', 'y'], inst)
@@ -316,7 +337,11 @@ def badness_hierarchical_voronoid_filling(prepare=False):
                         badness_engine)
 
     def fn(inst):
-        x, y_seed, c = requires(['x', 'y_seed', 'voronoid_c'], inst)
+        x, y_seed, c, sigmoid = requires(['x',
+                                          'y_seed',
+                                          'voronoid_c',
+                                          'voronoid_sigmoid'],
+                                         inst)
         badness_engine = requires('hierarchical_voronoid_filling_engine',
                                   inst)
 
@@ -325,7 +350,49 @@ def badness_hierarchical_voronoid_filling(prepare=False):
                                   zip(x, y_seed))))
 
         return inst.set('badness_hierarchical_voronoid_filling',
-                        badness_engine.run(seeding, c))
+                        badness_engine.run(seeding, c, sigmoid))
+
+    modes = {
+        True: prepare_fn,
+        False: fn
+    }
+
+    return modes[prepare]
+
+def badness_majority_voronoid(prepare=False):
+
+    def prepare_fn(inst):
+        x = requires('x', inst)
+        badness_engine = MajorityVoronoid(x)
+        return inst.set('majority_voronoid_engine',
+                        badness_engine)
+
+    def fn(inst):
+        x, y_seed = requires(['x', 'y_seed'], inst)
+        badness_engine = requires('majority_voronoid_engine',
+                                  inst)
+        return inst.set('badness_majority_voronoid',
+                        badness_engine.run(y_seed))
+
+    modes = {
+        True: prepare_fn,
+        False: fn
+    }
+
+    return modes[prepare]
+
+def badness_kmeans_mocking(prepare=False):
+
+    def prepare_fn(inst):
+        x, clusters_cnt = requires(['x', 'kmeans_clusters_cnt'], inst)
+        badness_engine = KmeansMocking(clusters_cnt, x)
+        return inst.set('kmeans_mocking_engine', badness_engine)
+
+    def fn(inst):
+        y_seed, sigmoid = requires(['y_seed', 'kmeans_sigmoid'], inst)
+        badness_engine = requires('kmeans_mocking_engine', inst)
+        return inst.set('badness_kmeans_mocking',
+                        badness_engine.run(y_seed, sigmoid))
 
     modes = {
         True: prepare_fn,

@@ -86,6 +86,11 @@ def copy(a, b):
         return inst.set(b, inst[a])
     return fn
 
+def let(field, val):
+    def fn(inst):
+        return inst.set(field, val)
+    return fn
+
 def start_timer():
     def fn(pipe):
         start_time = time.time()

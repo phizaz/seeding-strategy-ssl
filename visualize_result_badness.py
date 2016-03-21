@@ -4,7 +4,7 @@ import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import json
 
-dataset = 'iris'
+dataset = 'satimage'
 with open('results/badness_on_many_seeding-' + dataset + '.json') as file:
     result = json.load(file)
 
@@ -44,13 +44,17 @@ def plot(ax, sort_fn):
         #     list(map(lambda x: x['md'], result['badness_denclue_weighted'])),
         # 'badness_denclue_weighted_voronoid_filling':
         #     list(map(lambda x: x['voronoid_filling'], result['badness_denclue_weighted'])),
-        'badness_hierarchical_voronoid_filling': result['badness_hierarchical_voronoid_filling'],
+        # 'badness_hierarchical_voronoid_filling': result['badness_hierarchical_voronoid_filling'],
+        # 'badness_majority_voronoid': result['badness_majority_voronoid'],
+        'badness_kmeans_mocking': result['badness_kmeans_mocking'],
         'badness_naive_md':
             list(map(lambda x: x['md'], result['badness_naive'])),
         'names': result['name'],
     }
 
-    voronoid_c = result['voronoid_c'][0]
+    # voronoid_c = result['voronoid_c'][0]
+    # voronoid_sigmoid = result['voronoid_sigmoid'][0]
+    kmeans_sigmoid = result['kmeans_sigmoid'][0]
 
     # transpose the dictionary
     keys = data.keys()
@@ -59,7 +63,7 @@ def plot(ax, sort_fn):
         seq.append(dict(zip(keys, values)))
 
     # sort by sort_fn
-    # seq.sort(key=sort_fn)
+    seq.sort(key=sort_fn)
 
     # transpose it back!
     def dict_to_list(d, order):
@@ -83,11 +87,23 @@ def plot(ax, sort_fn):
     # ax.plot(x, col['badness_denclue_weighted_md'], 'k', color="cyan", label='kde+w')
     # ax.plot(x, col['badness_denclue_weighted_voronoid_filling'], 'k', color="green", label='kde+w+vl')
 
-    cmap = get_cmap(len(voronoid_c) + 1)
-    transposed = zip(*col['badness_hierarchical_voronoid_filling'])
-    for i, (badness, c) in enumerate(zip(transposed, voronoid_c)):
-        ax.plot(x, badness, 'k', color=cmap(i), label='c' + str(round(c, 2)))
+    # cmap = get_cmap(len(voronoid_c) + 1)
+    # print('voronoid_c:', len(voronoid_c))
+    # transposed = zip(*col['badness_hierarchical_voronoid_filling'])
+    # for i, (badness, c) in enumerate(zip(transposed, voronoid_c)):
+    #     ax.plot(x, badness, 'k', color=cmap(i), label='c' + str(round(c, 2)))
 
+    # cmap = get_cmap(len(voronoid_sigmoid) + 1)
+    # transposed = zip(*col['badness_hierarchical_voronoid_filling'])
+    # for i, (badness, sigmoid) in enumerate(zip(transposed, voronoid_sigmoid)):
+    #     ax.plot(x, badness, 'k', color=cmap(i), label='c' + str(round(sigmoid, 2)))
+
+    cmap = get_cmap(len(kmeans_sigmoid) + 1)
+    transposed = zip(*col['badness_kmeans_mocking'])
+    for i, (badness, sigmoid) in enumerate(zip(transposed, kmeans_sigmoid)):
+        ax.plot(x, badness, 'k', color=cmap(i), label='c' + str(round(sigmoid, 2)))
+
+    # ax.plot(x, col['badness_majority_voronoid'], 'k', color='red', label='naive')
     ax.plot(x, col['badness_naive_md'], 'k', label='naive')
 
     plt.sca(ax)
@@ -104,7 +120,7 @@ def plot(ax, sort_fn):
     #     label.set_fontsize('small')
     #
     # for label in legend.get_lines():
-    #     label.set_linewidth(1.5)  # the legend line width
+    #     label.set_linewidth(1)  # the legend line width
 
 plot(axes[0], lambda x: x['acc_kmeans_1'])
 plot(axes[1], lambda x: x['acc_kmeans_3'])
