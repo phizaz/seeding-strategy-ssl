@@ -26,7 +26,9 @@ def plot(X, fn):
     return [fn(x) for x in X]
 
 def single_cluster(coef_a, coef_b, rthreshold=0.01):
-    # this will fail if not counting the bigger picture as well!!
+    # determine if there is only one cluster
+    # if the two slopes are different so slightly enough
+    # nevertheless, this will fail if not counting the bigger picture as well!!
 
     # we use arctan instead of the slope
     # because slopes don't act in a uniform way
@@ -44,34 +46,30 @@ def single_cluster(coef_a, coef_b, rthreshold=0.01):
 
 def l_method(num_groups, merge_dist):
     element_cnt = len(num_groups)
-    # print('element_cnt:', element_cnt)
 
     # short circuit, since the l-method doesn't work with the number of elements below 4
     if element_cnt < 4:
         return 1
 
-    # now we have some leve of confidence that O(n) is not attainable
+    # now we have some level of confidence that O(n) is not attainable
     # this l_method is gonna be slow... n * 2 * O(MSE)
-    # print(num_groups)
-    # print(merge_dist)
 
-    # start_time = time.time()
     x_left = num_groups[:2]
     y_left = merge_dist[:2]
+
     # we use 'deque' data structure here to attain the efficient 'popleft'
     x_right = deque(num_groups[2:])
     y_right = deque(merge_dist[2:])
-    # end_time = time.time()
-    # print('list preparation time:', end_time - start_time)
 
     min_score = float('inf')
     min_c = None
+
     # this is for determining single cluster problem
-    min_coef_left = 0
-    min_coef_right = 0
+    # min_coef_left = 0
+    # min_coef_right = 0
 
     for left_cnt in range(2, element_cnt - 2 + 1):
-        # start_time = time.time()
+        # get best fit lines
         coef_left, intercept_left = best_fit_line(x_left, y_left)
         coef_right, intercept_right = best_fit_line(x_right, y_right)
 
@@ -81,13 +79,11 @@ def l_method(num_groups, merge_dist):
         y_pred_left = plot(x_left, fn_left)
         y_pred_right = plot(x_right, fn_right)
 
+        # calculate the error on each line
         mseA = mean_squared_error(y_left, y_pred_left)
         mseB = mean_squared_error(y_right, y_pred_right)
 
-        # print('mseA:', mseA)
-        # print('mseB:', mseB)
-        # end_time = time.time()
-
+        # calculate the error on both line cumulatively
         A = left_cnt / element_cnt * mseA
         B = (element_cnt - left_cnt) / element_cnt * mseB
         score = A + B
@@ -99,20 +95,14 @@ def l_method(num_groups, merge_dist):
         y_right.popleft()
 
         if score < min_score:
+            # find the best pair of best fit lines (that has the lowest mse)
+
             # left_cnt is not the number of clusters
             # since the first num_group begins with 2
             min_c, min_score = left_cnt + 1, score
-            # print('c:', left_cnt + 1)
-            # print('score:', score)
-            min_coef_left, min_coef_right = coef_left, coef_right
 
-    # if min_coef_left == 0 and min_coef_right == 0:
-    #     print('zero !!')
-    #     print('c:', min_c)
-    #     print('num_groups:', num_groups)
-    #     print('merge_dist:', merge_dist)
-
-    # print('min_c:', min_c)
+            # for determining single class problem
+            # min_coef_left, min_coef_right = coef_left, coef_right
 
     return min_c
 
@@ -127,6 +117,7 @@ def l_method(num_groups, merge_dist):
 
 def refined_l_method(num_groups, merge_dist):
     element_cnt = cutoff = last_knee = current_knee = len(num_groups)
+
     # short circuit, since the l-method doesn't work with the number of elements below 4
     if element_cnt < 4:
         return 1
@@ -135,14 +126,15 @@ def refined_l_method(num_groups, merge_dist):
         last_knee = current_knee
         # print('cutoff:', cutoff)
         current_knee = l_method(num_groups[:cutoff], merge_dist[:cutoff])
-        print('current_knee:', current_knee)
-        # this actually modified from original version *2 -> *3
-        # tested to have better results
-        # you can keep this number high, and no problem with that
+        # print('current_knee:', current_knee)
+
+        # you can keep this number high (* 2), and no problem with that
         # just make sure that the cutoff tends to go down every time
+        # but, we use 2 here according to the paper
         cutoff = current_knee * 3
         if current_knee >= last_knee:
             break
+
     return current_knee
 
 def get_centroids(X, belong_to):
@@ -161,29 +153,14 @@ def get_centroids(X, belong_to):
     return centroids
 
 def agglomerative_l_method(x):
-    # print('agglomerative cnt:', len(x))
-    # print('x:', x)
     # library: fastcluster
     merge_hist = linkage(x, method='ward', metric='euclidean', preserve_input=True)
-    # for each in merge_hist:
-    #     a, b, dist, cnt = each
-    #     a, b, cnt = int(a), int(b), int(cnt)
-    # print(a, b, cnt, dist)
-
-    # if abs(c - 0) < .000001:
-    #     print('point:', x[a], x[b])
 
     # reorder to be x [2->N]
     num_groups = [i for i in range(2, len(x) + 1)]
     merge_dist = list(reversed([each[2] for each in merge_hist]))
-    # print('num_groups:', num_groups[:100])
-    # print('merge_dist:', merge_dist[:100])
-    # print(num_groups)
-    # print(merge_dist)
 
-    # start_time = time.time()
     cluster_count = refined_l_method(num_groups, merge_dist)
-    # end_time = time.time()
 
     # print('refined_l_method time:', end_time - start_time)
     # print('cluster_count:', cluster_count)
@@ -216,6 +193,7 @@ def agglomerative_l_method(x):
     return Result(belong_to_renamed, centroids)
 
 def recursive_agglomerative_l_method(X):
+    raise Exception('out of service !')
     # won't give any disrable output for the moment
 
     def recursion(X):
