@@ -2,6 +2,7 @@ from fastcluster import linkage
 from disjoint import DisjointSet
 from collections import deque
 from sklearn.metrics import mean_squared_error
+from sklearn.neighbors import BallTree
 import time
 from itertools import islice
 import numpy
@@ -11,6 +12,17 @@ class Result:
     def __init__(self, labels, centers):
         self.labels_ = labels
         self.cluster_centers_ = centers
+
+    def predict(self, X):
+        ball_tree = BallTree()
+        ball_tree.fit(self.cluster_centers_)
+
+        _, indexes = ball_tree.query(X)
+        result = []
+        for idx, in indexes:
+            result.append(self.labels_[idx])
+
+        return result
 
 def f_creator(coef, intercept):
     def f(x):
@@ -225,4 +237,3 @@ def recursive_agglomerative_l_method(X):
     centroids = get_centroids(X, belong_to)
     # print('centroids:', centroids)
     return Result(belong_to, centroids)
-

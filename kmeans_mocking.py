@@ -7,12 +7,14 @@ class Group:
         self.name = name
         self.cnt = 0
         self.seeding_counter = Counter()
+        self.X = []
 
     def seeding_cnt(self):
         return sum(cnt for _, cnt in self.seeding_counter.items())
 
-    def add(self, y = None):
+    def add(self, x, y = None):
         self.cnt += 1
+        self.X.append(x)
 
         if y is not None:
             self.seeding_counter[y] += 1
@@ -87,8 +89,8 @@ class KmeansMocking:
 
         self.groups = [Group(i) for i in range(self.clusters_cnt)]
 
-        for group, label in zip(self.grouping_result(), seeding_y):
-            self.groups[group].add(label)
+        for x, group, label in zip(self.X, self.grouping_result(), seeding_y):
+            self.groups[group].add(x, label)
 
         return self.badness()
 

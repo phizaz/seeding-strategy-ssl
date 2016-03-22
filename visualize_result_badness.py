@@ -4,7 +4,7 @@ import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import json
 
-dataset = 'satimage'
+dataset = 'iris'
 with open('results/badness_on_many_seeding-' + dataset + '.json') as file:
     result = json.load(file)
 
@@ -46,7 +46,8 @@ def plot(ax, sort_fn):
         #     list(map(lambda x: x['voronoid_filling'], result['badness_denclue_weighted'])),
         # 'badness_hierarchical_voronoid_filling': result['badness_hierarchical_voronoid_filling'],
         # 'badness_majority_voronoid': result['badness_majority_voronoid'],
-        'badness_kmeans_mocking': result['badness_kmeans_mocking'],
+        # 'badness_kmeans_mocking': result['badness_kmeans_mocking'],
+        'badness_kmeans_mocking_nested': result['badness_kmeans_mocking_nested'],
         'badness_naive_md':
             list(map(lambda x: x['md'], result['badness_naive'])),
         'names': result['name'],
@@ -54,7 +55,7 @@ def plot(ax, sort_fn):
 
     # voronoid_c = result['voronoid_c'][0]
     # voronoid_sigmoid = result['voronoid_sigmoid'][0]
-    kmeans_sigmoid = result['kmeans_sigmoid'][0]
+    # kmeans_sigmoid = result['kmeans_sigmoid'][0]
 
     # transpose the dictionary
     keys = data.keys()
@@ -98,10 +99,12 @@ def plot(ax, sort_fn):
     # for i, (badness, sigmoid) in enumerate(zip(transposed, voronoid_sigmoid)):
     #     ax.plot(x, badness, 'k', color=cmap(i), label='c' + str(round(sigmoid, 2)))
 
-    cmap = get_cmap(len(kmeans_sigmoid) + 1)
-    transposed = zip(*col['badness_kmeans_mocking'])
-    for i, (badness, sigmoid) in enumerate(zip(transposed, kmeans_sigmoid)):
-        ax.plot(x, badness, 'k', color=cmap(i), label='c' + str(round(sigmoid, 2)))
+    # cmap = get_cmap(len(kmeans_sigmoid) + 1)
+    # transposed = zip(*col['badness_kmeans_mocking'])
+    # for i, (badness, sigmoid) in enumerate(zip(transposed, kmeans_sigmoid)):
+    #     ax.plot(x, badness, 'k', color=cmap(i), label='c' + str(round(sigmoid, 2)))
+
+    ax.plot(x, col['badness_kmeans_mocking_nested'], 'k', color='red', label='kmn')
 
     # ax.plot(x, col['badness_majority_voronoid'], 'k', color='red', label='naive')
     ax.plot(x, col['badness_naive_md'], 'k', label='naive')

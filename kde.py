@@ -9,7 +9,7 @@ from random import shuffle
 from parmap import parmap
 from collections import Counter
 from functools import partial
-from agglomerative_clustering import agglomerative_clutering
+from agglomerative_clustering import AgglomerativeClusteringMaxMergeDist
 from l_method import agglomerative_l_method
 
 def kernel(x):
@@ -187,7 +187,8 @@ def denclue(X, bandwidth, sample_size):
         return summits
 
     def group(points, max_merge_dist):
-        centroids, _ = agglomerative_clutering(points, max_merge_dist)
+        agg = AgglomerativeClusteringMaxMergeDist()
+        centroids, _ = agg.fit(points, max_merge_dist)
         return centroids
 
     # might not work for some cases

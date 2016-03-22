@@ -401,6 +401,26 @@ def badness_kmeans_mocking(prepare=False):
 
     return modes[prepare]
 
+def badness_kmeans_mocking_nested(prepare=False):
+
+    def prepare_fn(inst):
+        x, clusters_cnt = requires(['x', 'kmeans_clusters_cnt'], inst)
+        badness_engine = KmeansMockingNested(clusters_cnt, x)
+        return inst.set('kmeans_mocking_nested_engine', badness_engine)
+
+    def fn(inst):
+        y_seed = requires('y_seed', inst)
+        badness_engine = requires('kmeans_mocking_nested_engine', inst)
+        return inst.set('badness_kmeans_mocking_nested',
+                        badness_engine.run(y_seed))
+
+    modes = {
+        True: prepare_fn,
+        False: fn
+    }
+
+    return modes[prepare]
+
 def badness_naive(prepare=False):
     def prepare_fn(inst):
         # get good centroids
