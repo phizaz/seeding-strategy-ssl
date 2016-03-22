@@ -48,6 +48,7 @@ def plot(ax, sort_fn):
         # 'badness_majority_voronoid': result['badness_majority_voronoid'],
         # 'badness_kmeans_mocking': result['badness_kmeans_mocking'],
         'badness_kmeans_mocking_nested': result['badness_kmeans_mocking_nested'],
+        'badness_kmeans_mocking_nested_ratio': result['badness_kmeans_mocking_nested_ratio'],
         'badness_naive_md':
             list(map(lambda x: x['md'], result['badness_naive'])),
         'names': result['name'],
@@ -105,6 +106,7 @@ def plot(ax, sort_fn):
     #     ax.plot(x, badness, 'k', color=cmap(i), label='c' + str(round(sigmoid, 2)))
 
     ax.plot(x, col['badness_kmeans_mocking_nested'], 'k', color='red', label='kmn')
+    ax.plot(x, col['badness_kmeans_mocking_nested_ratio'], 'k', color='green', label='kmn')
 
     # ax.plot(x, col['badness_majority_voronoid'], 'k', color='red', label='naive')
     ax.plot(x, col['badness_naive_md'], 'k', label='naive')

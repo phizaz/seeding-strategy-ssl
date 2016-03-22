@@ -8,8 +8,8 @@ import numpy as np
 from cache import StorageCache
 
 datasets = [
-    get_iris(),
-    # get_pendigits(),
+    # get_iris(),
+    get_pendigits(),
     # get_yeast(),
     # get_satimage(),
     # get_banknote(),
@@ -99,14 +99,17 @@ def run_and_save(dataset):
             .pipe(badness_naive(prepare=True)) \
             .pipe(let('kmeans_clusters_cnt', dataset.cluster_cnt * 3)) \
             .pipe(badness_kmeans_mocking_nested(prepare=True)) \
+            .pipe(badness_kmeans_mocking_nested_ratio(prepare=True)) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_kmeans_mocking_nested()) \
+                .pipe(badness_kmeans_mocking_nested_ratio()) \
                 .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
                 .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
             .merge('result', group('evaluation_kmeans_1',
                                    'evaluation_kmeans_3',
                                    'badness_kmeans_mocking_nested',
+                                   'badness_kmeans_mocking_nested_ratio',
                                    'badness_naive',
                                    'name')) \
             .connect(stop())
@@ -118,9 +121,11 @@ def run_and_save(dataset):
             .pipe(badness_naive(prepare=True)) \
             .pipe(let('kmeans_clusters_cnt', dataset.cluster_cnt * 3)) \
             .pipe(badness_kmeans_mocking_nested(prepare=True)) \
+            .pipe(badness_kmeans_mocking_nested_ratio(prepare=True)) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_kmeans_mocking_nested()) \
+                .pipe(badness_kmeans_mocking_nested_ratio()) \
                 .split(10, cross('y_seed')) \
                     .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
                     .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
@@ -128,6 +133,7 @@ def run_and_save(dataset):
             .merge('result', group('evaluation_kmeans_1',
                                    'evaluation_kmeans_3',
                                    'badness_kmeans_mocking_nested',
+                                   'badness_kmeans_mocking_nested_ratio',
                                    'badness_naive',
                                    'name')) \
             .connect(stop())

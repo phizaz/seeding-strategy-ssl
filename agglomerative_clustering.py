@@ -5,6 +5,9 @@ from sklearn.neighbors import BallTree
 import numpy as np
 
 class AgglomerativeClustering(SkAgglomerativeClustering):
+    """
+    add predict method to original sklearn's AgglomerativeClustering
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,6 +47,10 @@ class AgglomerativeClustering(SkAgglomerativeClustering):
         return result
 
 class AgglomerativeClusteringMaxMergeDist:
+    """
+    Agglomerative Clustering with given max merge distance, instead of the number of clusters
+    """
+
     def __init__(self):
         self.X = None
         self.cluster_centers_ = None

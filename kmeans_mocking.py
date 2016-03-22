@@ -2,6 +2,18 @@ from sklearn.cluster import KMeans
 from collections import Counter
 import math
 
+'''
+Kmeans Mocking
+given the number of SSL clusters and use the same clustering algorithm (kmeans)
+to cluster and predict based on majority of seeding points on each voronoid area
+to prevent the over-confident problem, we use sigmoid function as a certainty function,
+in other words, the very first points will have higher contributer compare to
+the consecutive ones.
+
+result: no good, it is impossible to adjust the sigmoid parameter to match every test data
+because: we ignore the actual data distribution inside a given voronoid area
+'''
+
 class Group:
     def __init__(self, name):
         self.name = name

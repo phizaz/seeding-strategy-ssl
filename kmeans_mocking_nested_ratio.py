@@ -6,13 +6,11 @@ from agglomerative_clustering import AgglomerativeClustering
 import math
 
 '''
-Kmeans Mocking Nested (output with bounds)
-kmeans with sub-groups (using l-method + agglomerative clustering or kmeans)
-test result is that using agglomerative clustering will have the looser lower bound
-but, better upper bound and conformation
-
-result: very good upper bound for iris dataset -- loose lower bound
-not at a usable level for other datasets
+Kmeans Mocking Nested Ratio (with bounds)
+An attemp to tighten the lower bound
+kmeans with sub-groups (using l-method + agglomerative clustering)
+— tighter lower bound — ignore the multi label seeded groups
+and use the majority instead
 '''
 
 class Group:
@@ -40,41 +38,16 @@ class Group:
         # returns label, cnt
         return self.seeding_counter.most_common(1).pop()
 
-    def has_collision(self):
-        # seeded group is said to be
-        seeds = list(filter(lambda xy: xy[1] is not None,
-                            zip(self.X, self.y_seed)))
-
-        seed_x, seed_y = list(zip(*seeds))
-        seed_groups = self.clustering_model.predict(seed_x)
-
-        label_by_group = {}
-        for cluster, label in zip(seed_groups, seed_y):
-            if not cluster in label_by_group:
-                label_by_group[cluster] = label
-            elif label_by_group[cluster] != label:
-                return True
-
-        return False
-
     def cluster(self):
         l_method = agglomerative_l_method(self.X)
         self.sub_clusters_cnt = len(l_method.cluster_centers_)
         # print('sub_clusters_cnt:', self.sub_clusters_cnt, 'cnt:', self.cnt)
 
-        while True:
-            # self.clustering_model = KMeans(self.sub_clusters_cnt)
-            self.clustering_model = AgglomerativeClustering(self.sub_clusters_cnt)
-            self.clustering_model.fit(self.X)
+        # self.clustering_model = KMeans(self.sub_clusters_cnt)
+        self.clustering_model = AgglomerativeClustering(self.sub_clusters_cnt)
+        self.clustering_model.fit(self.X)
 
-            if self.has_collision():
-                # increase sub-cluster count until there is no ambiguous seeding
-                self.sub_clusters_cnt += 1
-                # print('sub_clusters_cnt:', self.sub_clusters_cnt, 'cnt:', self.cnt)
-            else:
-                break
-
-class KmeansMockingNested:
+class KmeansMockingNestedRatio:
 
     def __init__(self, clusters_cnt, X):
         self.kmeans = KMeans(clusters_cnt)
@@ -112,19 +85,25 @@ class KmeansMockingNested:
         seed_groups = group.clustering_model.predict(seed_x)
 
         # no of points in seeded groups (certain groups)
-        certain_cnt = sum(count_by_group[cluster] for cluster in set(seed_groups))
+        certain_cnt = sum(count_by_group[g] for g in set(seed_groups))
         uncertain_cnt = group.cnt - certain_cnt
 
-        groups_by_label = {}
-        for cluster, label in zip(seed_groups, seed_y):
-            if not label in groups_by_label:
-                groups_by_label[label] = set()
+        label_cnt_by_group = {}
+        for g, label in zip(seed_groups, seed_y):
+            if not g in label_cnt_by_group:
+                label_cnt_by_group[g] = Counter()
+            label_cnt_by_group[g][label] += 1
 
-            groups_by_label[label].add(cluster)
+        # print('label_cnt_by_group:', label_cnt_by_group)
 
-        major_label, major_cnt = group.major()
-        major_groups = groups_by_label[major_label]
-        major_cnt = sum(count_by_group[g] for g in major_groups)
+        major_label, _ = group.major()
+
+        def sum_seeds_in_group(g):
+            return sum(seed_cnt for _, seed_cnt in label_cnt_by_group[g].items())
+
+        major_cnt = 0
+        for g in set(seed_groups):
+            major_cnt += count_by_group[g] * label_cnt_by_group[g][major_label] / sum_seeds_in_group(g)
 
         lower_bound = major_cnt
         upper_bound = major_cnt + uncertain_cnt

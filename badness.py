@@ -3,6 +3,7 @@ from hierarchical_voronoid_filling import HierarchicalVoronoidFilling
 from majority_voronoid import MajorityVoronoid
 from kmeans_mocking import KmeansMocking
 from kmeans_mocking_nested import KmeansMockingNested
+from kmeans_mocking_nested_ratio import KmeansMockingNestedRatio
 
 def rmsd_nearest_from_centroids(seeding, centroids):
     # root mean squared distance from each centroids to its closest seeding
