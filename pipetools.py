@@ -63,6 +63,20 @@ def evaluate():
 
     return fn
 
+def label_correctness(field_y_pred, field_y_ori):
+    def fn(inst):
+        y_pred, y_ori = requires([field_y_pred, field_y_ori], inst)
+
+        assert len(y_ori) == len(y_pred)
+
+        correct = 0
+        for pred, ori in zip(y_pred, y_ori):
+            correct += pred == ori
+
+        correctness = correct, len(y_ori)
+        return inst.set('label_correctness', correctness)
+
+    return fn
 
 def dump(key):
     def fn(inst):

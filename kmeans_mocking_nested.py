@@ -23,6 +23,7 @@ class Group:
         self.X = []
         self.y_seed = []
         self.sub_clusters_cnt = None
+        self.sub_centroids = []
         self.clustering_model = None
 
     def seeding_cnt(self):
@@ -70,7 +71,7 @@ class Group:
             if self.has_collision():
                 # increase sub-cluster count until there is no ambiguous seeding
                 self.sub_clusters_cnt += 1
-                # print('sub_clusters_cnt:', self.sub_clusters_cnt, 'cnt:', self.cnt)
+                print('sub_clusters_cnt:', self.sub_clusters_cnt, 'seed cnt:', self.seeding_cnt(), 'cnt:', self.cnt)
             else:
                 break
 

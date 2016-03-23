@@ -2,6 +2,7 @@ import pvectorc
 from parmap import parmap
 from pyrsistent import pmap, pvector, v, m
 import multiprocessing
+import gc
 
 cpu_count = multiprocessing.cpu_count()
 # cpu_count = 2
@@ -142,6 +143,10 @@ class Pipe:
         result = parmap(fn, queue, cpu_count)
         # singlecore map
         # result = list(map(fn, queue))
+
+        # run garbage collector
+        # because there's a memory leak from parmap (may be)
+        gc.collect()
 
         # print('result:', result)
         result_pt = 0

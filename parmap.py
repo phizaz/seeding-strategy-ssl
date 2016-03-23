@@ -1,4 +1,5 @@
 import multiprocessing
+import gc
 
 # parallel map
 # author: klaus se
@@ -10,6 +11,9 @@ def fun(f,q_in,q_out):
         if i is None:
             break
         q_out.put((i,f(x)))
+
+        # this should solve memory leak
+        gc.collect()
 
 def parmap(f, X, nprocs = multiprocessing.cpu_count()):
     q_in   = multiprocessing.Queue(1)

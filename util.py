@@ -40,6 +40,10 @@ def rescale(data):
         maximum = max(row)
         minimum = min(row)
 
+        if abs(maximum - minimum) < 1e-8:
+            # zero variance
+            return map(lambda col: 0.0, row)
+
         return map(lambda col: (col - minimum) / (maximum - minimum),
                    row)
 

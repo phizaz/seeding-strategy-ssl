@@ -16,7 +16,8 @@ class Dataset:
         self.Y_test = Y_test
         self.cluster_cnt = self.count_cluster()
         self.K_for_KNN = self.calculate_K_for_KNN()
-        self.bandwidth = self.get_bandwidth()
+
+        # self.bandwidth = self.get_bandwidth()
 
     def count_cluster(self):
         counter = Counter(self.Y)
@@ -136,11 +137,6 @@ def get_satimage():
         _load_y(file_test)
     )
 
-def get_adult():
-    # it's not numerical!!!
-    raise Exception('not implemented yet')
-    pass
-
 def get_banknote():
     file = './datasets/banknote/data_banknote_authentication.txt'
     return Dataset(
@@ -177,5 +173,56 @@ def get_spam():
         load_y(file, ',', lambda row: row[-1])
     )
 
-def get_mushroom():
-    raise Exception('not numerical')
+def get_auslan(id=1):
+    file = './datasets/auslan/tctodd/tctodd' + str(id) + '.txt'
+    return Dataset(
+        'auslan',
+        load_x(file, ' ', lambda row: row[:-1]),
+        load_y(file, ' ', lambda row: row[-1])
+    )
+
+def get_drd():
+    file = './datasets/drd/messidor_features.arff'
+    return Dataset(
+        'drd',
+        load_x(file, ',', lambda row: row[:-1]),
+        load_y(file, ',', lambda row: row[-1])
+    )
+
+def get_imagesegment():
+    file = './datasets/imagesegment/segmentation.data'
+    file_test = './datasets/imagesegment/segmentation.test'
+    return Dataset(
+        'imagesegment',
+        load_x(file, ',', lambda row: row[1:]),
+        load_y(file, ',', lambda row: row[0]),
+        load_x(file_test, ',', lambda row: row[1:]),
+        load_y(file_test, ',', lambda row: row[0])
+    )
+
+def get_pageblock():
+    file = './datasets/pageblock/page-blocks.data'
+    return Dataset(
+        'pageblock',
+        load_x(file, ' ', lambda row: row[1:]),
+        load_y(file, ' ', lambda row: row[-1])
+    )
+
+def get_statlogsegment():
+    file = './datasets/statlogsegment/segment.dat'
+    return Dataset(
+        'statlogsegment',
+        load_x(file, ' ', lambda row: row[:-1]),
+        load_y(file, ' ', lambda row: row[-1])
+    )
+
+def get_winequality(type='white'):
+    file = {
+        'white': './datasets/winequality/winequality-white.csv',
+        'red': './datasets/winequality/winequality-red.csv',
+    }
+    return Dataset(
+        'winequality_' + type,
+        load_x(file[type], ';', lambda row: row[:-1]),
+        load_y(file[type], ';', lambda row: row[-1])
+    )

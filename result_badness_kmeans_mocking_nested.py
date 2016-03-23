@@ -8,26 +8,37 @@ import numpy as np
 from cache import StorageCache
 
 datasets = [
-    # get_iris(),
+    get_iris(),
     get_pendigits(),
-    # get_yeast(),
+    get_yeast(),
     # get_satimage(),
     # get_banknote(),
+    # get_magic(),  # super slow for kde hill climbing
     # get_letter(), # large dataset
-    # get_magic(), # super slow for kde hill climbing
     # get_eeg(), # is not suitable for SSL
     # get_spam(), # prone to imbalanced problem
+    # get_auslan(),
+    # get_drd(),
+    # get_imagesegment(),
+    # get_pageblock(),
+    # get_statlogsegment(),
+    # get_winequality('white'),
+    # get_winequality('red'),
 ]
 
-def kmeans_ssl(clusters, neighbors, field):
+datasets.sort(key=lambda dataset: len(dataset.X))
+
+def kmeans_ssl(clusters, neighbors, name):
     def fn(pipe):
         p = pipe \
             .pipe(kmeans(clusters)) \
             .y(label_consensus()) \
+            .pipe(label_correctness('y', 'y_ori'))\
             .pipe(knn(neighbors)) \
             .pipe(predict()) \
             .pipe(evaluate()) \
-            .pipe(copy('evaluation', field))
+            .pipe(copy('evaluation', 'evaluation_' + name))\
+            .pipe(copy('label_correctness', 'label_correctness_' + name))
         return p
 
     return fn
@@ -94,6 +105,7 @@ def run_and_save(dataset):
         return Pipe() \
             .x(dataset.X) \
             .y(dataset.Y) \
+            .pipe(copy('y', 'y_ori')) \
             .x_test(dataset.X_test) \
             .y_test(dataset.Y_test) \
             .pipe(badness_naive(prepare=True)) \
@@ -104,10 +116,12 @@ def run_and_save(dataset):
                 .pipe(badness_naive()) \
                 .pipe(badness_kmeans_mocking_nested()) \
                 .pipe(badness_kmeans_mocking_nested_ratio()) \
-                .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
-                .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
+                .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'kmeans_1')) \
+                .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'kmeans_3')) \
             .merge('result', group('evaluation_kmeans_1',
                                    'evaluation_kmeans_3',
+                                   'label_correctness_kmeans_1',
+                                   'label_correctness_kmeans_3',
                                    'badness_kmeans_mocking_nested',
                                    'badness_kmeans_mocking_nested_ratio',
                                    'badness_naive',
@@ -127,11 +141,21 @@ def run_and_save(dataset):
                 .pipe(badness_kmeans_mocking_nested()) \
                 .pipe(badness_kmeans_mocking_nested_ratio()) \
                 .split(10, cross('y_seed')) \
-                    .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
-                    .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
-                .merge(['evaluation_kmeans_1', 'evaluation_kmeans_3'], total('evaluation_kmeans_1'), total('evaluation_kmeans_3')) \
+                    .pipe(copy('y', 'y_ori')) \
+                    .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'kmeans_1')) \
+                    .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'kmeans_3')) \
+                .merge(['evaluation_kmeans_1',
+                        'evaluation_kmeans_3',
+                        'label_correctness_kmeans_1',
+                        'label_correctness_kmeans_3'],
+                       total('evaluation_kmeans_1'),
+                       total('evaluation_kmeans_3'),
+                       average('label_correctness_kmeans_1'),
+                       average('label_correctness_kmeans_3')) \
             .merge('result', group('evaluation_kmeans_1',
                                    'evaluation_kmeans_3',
+                                   'label_correctness_kmeans_1',
+                                   'label_correctness_kmeans_3',
                                    'badness_kmeans_mocking_nested',
                                    'badness_kmeans_mocking_nested_ratio',
                                    'badness_naive',

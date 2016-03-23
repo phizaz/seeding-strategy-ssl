@@ -1,7 +1,7 @@
 from fastcluster import linkage
 from disjoint import DisjointSet
 from sklearn.cluster import AgglomerativeClustering as SkAgglomerativeClustering
-from sklearn.neighbors import BallTree
+from sklearn.neighbors import BallTree, KNeighborsClassifier
 import numpy as np
 
 class AgglomerativeClustering(SkAgglomerativeClustering):
@@ -36,15 +36,9 @@ class AgglomerativeClustering(SkAgglomerativeClustering):
 
     def predict(self, X):
         centroids = self.cluster_centers_
-
-        ball_tree = BallTree(centroids)
-        _, indexes = ball_tree.query(X)
-
-        result = []
-        for idx, in indexes:
-            result.append(self.labels_[idx])
-
-        return result
+        knn = KNeighborsClassifier(1)
+        knn.fit(centroids, [i for i in range(len(centroids))])
+        return knn.predict(X)
 
 class AgglomerativeClusteringMaxMergeDist:
     """

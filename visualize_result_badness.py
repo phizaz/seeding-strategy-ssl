@@ -25,13 +25,17 @@ def get_cmap(N):
     return map_index_to_rgb_color
     # return static
 
-def plot(ax, sort_fn):
+def plot(ax, sort_fn, name=''):
 
     data = {
         'acc_kmeans_1':
             list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_1'])),
         'acc_kmeans_3':
             list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_3'])),
+        'label_correctness_kmeans_1':
+            list(map(lambda x: x[0] / x[1], result['label_correctness_kmeans_1'])),
+        'label_correctness_kmeans_3':
+            list(map(lambda x: x[0] / x[1], result['label_correctness_kmeans_3'])),
         # 'badness_l_method_md':
         #     list(map(lambda x: x['md'], result['badness_l_method'])),
         # 'badness_l_method_weighted_md':
@@ -82,6 +86,8 @@ def plot(ax, sort_fn):
     col = sorted_data
     ax.plot(x, col['acc_kmeans_1'], 'k--', label='acc c*1')
     ax.plot(x, col['acc_kmeans_3'], 'k--', color="blue", label='acc c*3')
+    ax.plot(x, col['label_correctness_kmeans_1'], 'k--', color="orange", label='label c*1')
+    ax.plot(x, col['label_correctness_kmeans_3'], 'k--', color="yellow", label='label c*3')
     # ax.plot(x, col['badness_l_method_md'], 'k', color="red", label='l')
     # ax.plot(x, col['badness_l_method_weighted_md'], 'k', color="orange", label='l+w')
     # ax.plot(x, col['badness_l_method_weighted_voronoid_filling'], 'k', color="yellow", label='l+w+vl')
@@ -106,12 +112,13 @@ def plot(ax, sort_fn):
     #     ax.plot(x, badness, 'k', color=cmap(i), label='c' + str(round(sigmoid, 2)))
 
     ax.plot(x, col['badness_kmeans_mocking_nested'], 'k', color='red', label='kmn')
-    ax.plot(x, col['badness_kmeans_mocking_nested_ratio'], 'k', color='green', label='kmn')
+    ax.plot(x, col['badness_kmeans_mocking_nested_ratio'], 'k', color='magenta', label='kmn')
 
     # ax.plot(x, col['badness_majority_voronoid'], 'k', color='red', label='naive')
     ax.plot(x, col['badness_naive_md'], 'k', label='naive')
 
     plt.sca(ax)
+    plt.title(dataset + ' ' + name)
     plt.xticks(range(cnt), col['names'], rotation=90)
 
     # legend = ax.legend(loc='lower center', shadow=True)
@@ -127,8 +134,8 @@ def plot(ax, sort_fn):
     # for label in legend.get_lines():
     #     label.set_linewidth(1)  # the legend line width
 
-plot(axes[0], lambda x: x['acc_kmeans_1'])
-plot(axes[1], lambda x: x['acc_kmeans_3'])
+plot(axes[0], lambda x: x['acc_kmeans_1'], 'sort by kmeans 1')
+plot(axes[1], lambda x: x['acc_kmeans_3'], 'sort by kmeans 3')
 
 plt.subplots_adjust(bottom=0.3)
 

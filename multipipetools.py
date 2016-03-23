@@ -110,8 +110,8 @@ def group(*fields):
                 storage[field].append(vals[idx])
 
         # print('storage:', storage)
-
         return storage
+
     return fn
 
 def flat_group(field):
