@@ -64,8 +64,8 @@ class Group:
         # print('sub_clusters_cnt:', self.sub_clusters_cnt, 'cnt:', self.cnt)
 
         while True:
-            # self.clustering_model = KMeans(self.sub_clusters_cnt)
-            self.clustering_model = AgglomerativeClustering(self.sub_clusters_cnt)
+            self.clustering_model = KMeans(self.sub_clusters_cnt)
+            # self.clustering_model = AgglomerativeClustering(self.sub_clusters_cnt)
             self.clustering_model.fit(self.X)
 
             if self.has_collision():

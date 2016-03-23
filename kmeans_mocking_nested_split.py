@@ -1,5 +1,5 @@
 from sklearn.cluster import KMeans
-from sklearn.neighbors import BallTree
+from dividable_clustering import DividableClustering
 from collections import Counter
 from l_method import agglomerative_l_method
 from agglomerative_clustering import AgglomerativeClustering
@@ -20,7 +20,6 @@ class Group:
         self.seeding_counter = Counter()
         self.X = []
         self.y_seed = []
-        self.sub_clusters_cnt = None
         self.clustering_model = None
 
     def seeding_cnt(self):
@@ -38,13 +37,21 @@ class Group:
         # returns label, cnt
         return self.seeding_counter.most_common(1).pop()
 
-    def has_collision(self):
+    def has_collision(self, X, y_seed, model = None):
         # seeded group is said to be
         seeds = list(filter(lambda xy: xy[1] is not None,
-                            zip(self.X, self.y_seed)))
+                            zip(X, y_seed)))
+
+        # no seeds, no collision
+        if len(seeds) == 0:
+            return False
 
         seed_x, seed_y = list(zip(*seeds))
-        seed_groups = self.clustering_model.predict(seed_x)
+
+        if model is None:
+            seed_groups = [0 for i in range(len(seed_x))]
+        else:
+            seed_groups = model.predict(seed_x)
 
         label_by_group = {}
         for cluster, label in zip(seed_groups, seed_y):
@@ -57,14 +64,46 @@ class Group:
 
     def cluster(self):
         l_method = agglomerative_l_method(self.X)
-        self.sub_clusters_cnt = len(l_method.cluster_centers_)
+        suggest_cluster_cnt = len(l_method.cluster_centers_)
         # print('sub_clusters_cnt:', self.sub_clusters_cnt, 'cnt:', self.cnt)
 
-        self.clustering_model = KMeans(self.sub_clusters_cnt)
-        # self.clustering_model = AgglomerativeClustering(self.sub_clusters_cnt)
-        self.clustering_model.fit(self.X)
+        agg = AgglomerativeClustering(suggest_cluster_cnt)
+        agg.fit(self.X)
 
-class KmeansMockingNestedRatio:
+        # first tier clustering, using agglomerative clustering
+        self.clustering_model = DividableClustering()
+        self.clustering_model.fit(self.X, agg.labels_)
+
+        # second tier, using kmeans
+        for suspect_label in range(suggest_cluster_cnt):
+            ind_X = self.clustering_model.get_X_with_idx(suspect_label)
+            y_seed = []
+            X = []
+            for x, idx in ind_X:
+                X.append(x)
+                y_seed.append(self.y_seed[idx])
+
+            # no collision in this sub-group
+            if not self.has_collision(X, y_seed):
+                continue
+
+            # there is collisions in this sub-group
+            cluster_cnt = 2
+            while True:
+                kmeans = KMeans(cluster_cnt)
+                kmeans.fit(X)
+
+                if not self.has_collision(X, y_seed, kmeans):
+                    self.clustering_model.split(suspect_label, kmeans.labels_)
+                    break
+
+                print('split sub_clusters_cnt:', cluster_cnt, 'cnt:', len(X), 'main cnt:', self.cnt)
+                cluster_cnt += 1
+
+        self.clustering_model.relabel()
+
+
+class KmeansMockingNestedSplit:
 
     def __init__(self, clusters_cnt, X):
         self.kmeans = KMeans(clusters_cnt)
@@ -92,7 +131,7 @@ class KmeansMockingNestedRatio:
         # cluster the sub-clusters
         group.cluster()
 
-        count_by_group = Counter(group.clustering_model.labels_)
+        count_by_group = Counter(group.clustering_model.predict(group.X))
 
         # seeded group is said to be
         seeds = list(filter(lambda xy: xy[1] is not None,

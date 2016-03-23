@@ -53,6 +53,7 @@ def plot(ax, sort_fn, name=''):
         # 'badness_kmeans_mocking': result['badness_kmeans_mocking'],
         'badness_kmeans_mocking_nested': result['badness_kmeans_mocking_nested'],
         'badness_kmeans_mocking_nested_ratio': result['badness_kmeans_mocking_nested_ratio'],
+        'badness_kmeans_mocking_nested_split': result['badness_kmeans_mocking_nested_split'],
         'badness_naive_md':
             list(map(lambda x: x['md'], result['badness_naive'])),
         'names': result['name'],
@@ -112,10 +113,11 @@ def plot(ax, sort_fn, name=''):
     #     ax.plot(x, badness, 'k', color=cmap(i), label='c' + str(round(sigmoid, 2)))
 
     ax.plot(x, col['badness_kmeans_mocking_nested'], 'k', color='red', label='kmn')
-    ax.plot(x, col['badness_kmeans_mocking_nested_ratio'], 'k', color='magenta', label='kmn')
+    ax.plot(x, col['badness_kmeans_mocking_nested_ratio'], 'k', color='orange', label='kmn')
+    ax.plot(x, col['badness_kmeans_mocking_nested_split'], 'k', color='blue', label='kmn')
 
     # ax.plot(x, col['badness_majority_voronoid'], 'k', color='red', label='naive')
-    ax.plot(x, col['badness_naive_md'], 'k', label='naive')
+    ax.plot(x, col['badness_naive_md'], 'k', color='grey', label='naive')
 
     plt.sca(ax)
     plt.title(dataset + ' ' + name)
