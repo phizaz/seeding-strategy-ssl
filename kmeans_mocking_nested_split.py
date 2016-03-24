@@ -88,17 +88,23 @@ class Group:
                 continue
 
             # there is collisions in this sub-group
-            cluster_cnt = 2
-            while True:
+            low_cnt = 2
+            high_cnt = len(X)
+            last_possible_labels = None
+            while low_cnt <= high_cnt:
+                cluster_cnt = int((high_cnt - low_cnt) * 1/4 + low_cnt)
                 kmeans = KMeans(cluster_cnt)
                 kmeans.fit(X)
 
                 if not self.has_collision(X, y_seed, kmeans):
-                    self.clustering_model.split(suspect_label, kmeans.labels_)
-                    break
+                    last_possible_labels = kmeans.labels_
+                    high_cnt = cluster_cnt - 1
+                else:
+                    low_cnt = cluster_cnt + 1
 
                 print('split sub_clusters_cnt:', cluster_cnt, 'cnt:', len(X), 'main cnt:', self.cnt)
-                cluster_cnt += 1
+
+            self.clustering_model.split(suspect_label, last_possible_labels)
 
         self.clustering_model.relabel()
 

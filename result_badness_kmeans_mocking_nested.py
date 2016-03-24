@@ -10,23 +10,24 @@ from cache import StorageCache
 datasets = [
     # get_iris(),
     get_pendigits(),
-    get_yeast(),
+    # get_yeast(),
     # get_satimage(),
     # get_banknote(),
-    # get_magic(),  # super slow for kde hill climbing
-    # get_letter(), # large dataset
-    # get_eeg(), # is not suitable for SSL
     # get_spam(), # prone to imbalanced problem
-    # get_auslan(),
     # get_drd(),
     # get_imagesegment(),
     # get_pageblock(),
     # get_statlogsegment(),
     # get_winequality('white'),
     # get_winequality('red'),
+    # get_magic(),  # super slow for kde hill climbing
+    # get_letter(), # large dataset
+    # get_eeg(), # is not suitable for SSL
+    # get_auslan(),
 ]
 
 datasets.sort(key=lambda dataset: len(dataset.X))
+print('datasets:', ', '.join(list(map(lambda dataset: dataset.name, datasets))))
 
 def kmeans_ssl(clusters, neighbors, name):
     def fn(pipe):
@@ -95,7 +96,6 @@ def seeder(seeding_fns, seeding_names, name):
     return map_fn
 
 def run_and_save(dataset):
-    print('dataset:', dataset.name)
     print('has_testdata:', dataset.has_testdata())
 
     seeding_fns, seeding_names = create_seeding_fns(dataset)
@@ -110,21 +110,15 @@ def run_and_save(dataset):
             .y_test(dataset.Y_test) \
             .pipe(badness_naive(prepare=True)) \
             .pipe(let('kmeans_clusters_cnt', dataset.cluster_cnt * 3)) \
-            .pipe(badness_kmeans_mocking_nested(prepare=True)) \
             .pipe(badness_kmeans_mocking_nested_ratio(prepare=True)) \
             .pipe(badness_kmeans_mocking_nested_split(prepare=True)) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
-                .pipe(badness_kmeans_mocking_nested()) \
                 .pipe(badness_kmeans_mocking_nested_ratio()) \
                 .pipe(badness_kmeans_mocking_nested_split()) \
-                .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'kmeans_1')) \
                 .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'kmeans_3')) \
-            .merge('result', group('evaluation_kmeans_1',
-                                   'evaluation_kmeans_3',
-                                   'label_correctness_kmeans_1',
+            .merge('result', group('evaluation_kmeans_3',
                                    'label_correctness_kmeans_3',
-                                   'badness_kmeans_mocking_nested',
                                    'badness_kmeans_mocking_nested_ratio',
                                    'badness_kmeans_mocking_nested_split',
                                    'badness_naive',
@@ -137,31 +131,21 @@ def run_and_save(dataset):
             .y(dataset.Y) \
             .pipe(badness_naive(prepare=True)) \
             .pipe(let('kmeans_clusters_cnt', dataset.cluster_cnt * 3)) \
-            .pipe(badness_kmeans_mocking_nested(prepare=True)) \
             .pipe(badness_kmeans_mocking_nested_ratio(prepare=True)) \
             .pipe(badness_kmeans_mocking_nested_split(prepare=True)) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
-                .pipe(badness_kmeans_mocking_nested()) \
                 .pipe(badness_kmeans_mocking_nested_ratio()) \
                 .pipe(badness_kmeans_mocking_nested_split()) \
                 .split(10, cross('y_seed')) \
                     .pipe(copy('y', 'y_ori')) \
-                    .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'kmeans_1')) \
                     .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'kmeans_3')) \
-                .merge(['evaluation_kmeans_1',
-                        'evaluation_kmeans_3',
-                        'label_correctness_kmeans_1',
+                .merge(['evaluation_kmeans_3',
                         'label_correctness_kmeans_3'],
-                       total('evaluation_kmeans_1'),
                        total('evaluation_kmeans_3'),
-                       average('label_correctness_kmeans_1'),
                        average('label_correctness_kmeans_3')) \
-            .merge('result', group('evaluation_kmeans_1',
-                                   'evaluation_kmeans_3',
-                                   'label_correctness_kmeans_1',
+            .merge('result', group('evaluation_kmeans_3',
                                    'label_correctness_kmeans_3',
-                                   'badness_kmeans_mocking_nested',
                                    'badness_kmeans_mocking_nested_ratio',
                                    'badness_kmeans_mocking_nested_split',
                                    'badness_naive',
@@ -183,5 +167,8 @@ def run_and_save(dataset):
 #     for dataset in datasets:
 #         executor.submit(run_and_save, dataset)
 
-for dataset in datasets:
+for i, dataset in enumerate(datasets):
+    print('dataset no:', i + 1, '/', len(datasets))
+    print('dataset:', dataset.name)
+    print('yet to be done:', ', '.join(list(map(lambda d: d.name, datasets[i+1:]))))
     run_and_save(dataset)

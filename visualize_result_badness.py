@@ -4,11 +4,11 @@ import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import json
 
-dataset = 'iris'
+dataset = 'pendigits'
 with open('results/badness_on_many_seeding-' + dataset + '.json') as file:
     result = json.load(file)
 
-fig, axes = plt.subplots(ncols=2)
+fig, axes = plt.subplots(ncols=1)
 
 def get_cmap(N):
     '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct
@@ -28,12 +28,12 @@ def get_cmap(N):
 def plot(ax, sort_fn, name=''):
 
     data = {
-        'acc_kmeans_1':
-            list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_1'])),
+        # 'acc_kmeans_1':
+        #     list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_1'])),
         'acc_kmeans_3':
             list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_3'])),
-        'label_correctness_kmeans_1':
-            list(map(lambda x: x[0] / x[1], result['label_correctness_kmeans_1'])),
+        # 'label_correctness_kmeans_1':
+        #     list(map(lambda x: x[0] / x[1], result['label_correctness_kmeans_1'])),
         'label_correctness_kmeans_3':
             list(map(lambda x: x[0] / x[1], result['label_correctness_kmeans_3'])),
         # 'badness_l_method_md':
@@ -51,7 +51,7 @@ def plot(ax, sort_fn, name=''):
         # 'badness_hierarchical_voronoid_filling': result['badness_hierarchical_voronoid_filling'],
         # 'badness_majority_voronoid': result['badness_majority_voronoid'],
         # 'badness_kmeans_mocking': result['badness_kmeans_mocking'],
-        'badness_kmeans_mocking_nested': result['badness_kmeans_mocking_nested'],
+        # 'badness_kmeans_mocking_nested': result['badness_kmeans_mocking_nested'],
         'badness_kmeans_mocking_nested_ratio': result['badness_kmeans_mocking_nested_ratio'],
         'badness_kmeans_mocking_nested_split': result['badness_kmeans_mocking_nested_split'],
         'badness_naive_md':
@@ -85,9 +85,9 @@ def plot(ax, sort_fn, name=''):
     x = range(cnt)
 
     col = sorted_data
-    ax.plot(x, col['acc_kmeans_1'], 'k--', label='acc c*1')
+    # ax.plot(x, col['acc_kmeans_1'], 'k--', label='acc c*1')
     ax.plot(x, col['acc_kmeans_3'], 'k--', color="blue", label='acc c*3')
-    ax.plot(x, col['label_correctness_kmeans_1'], 'k--', color="orange", label='label c*1')
+    # ax.plot(x, col['label_correctness_kmeans_1'], 'k--', color="orange", label='label c*1')
     ax.plot(x, col['label_correctness_kmeans_3'], 'k--', color="yellow", label='label c*3')
     # ax.plot(x, col['badness_l_method_md'], 'k', color="red", label='l')
     # ax.plot(x, col['badness_l_method_weighted_md'], 'k', color="orange", label='l+w')
@@ -112,7 +112,7 @@ def plot(ax, sort_fn, name=''):
     # for i, (badness, sigmoid) in enumerate(zip(transposed, kmeans_sigmoid)):
     #     ax.plot(x, badness, 'k', color=cmap(i), label='c' + str(round(sigmoid, 2)))
 
-    ax.plot(x, col['badness_kmeans_mocking_nested'], 'k', color='red', label='kmn')
+    # ax.plot(x, col['badness_kmeans_mocking_nested'], 'k', color='red', label='kmn')
     ax.plot(x, col['badness_kmeans_mocking_nested_ratio'], 'k', color='orange', label='kmn')
     ax.plot(x, col['badness_kmeans_mocking_nested_split'], 'k', color='blue', label='kmn')
 
@@ -136,8 +136,8 @@ def plot(ax, sort_fn, name=''):
     # for label in legend.get_lines():
     #     label.set_linewidth(1)  # the legend line width
 
-plot(axes[0], lambda x: x['acc_kmeans_1'], 'sort by kmeans 1')
-plot(axes[1], lambda x: x['acc_kmeans_3'], 'sort by kmeans 3')
+# plot(axes[0], lambda x: x['acc_kmeans_1'], 'sort by kmeans 1')
+plot(axes, lambda x: x['acc_kmeans_3'], 'sort by kmeans 3')
 
 plt.subplots_adjust(bottom=0.3)
 

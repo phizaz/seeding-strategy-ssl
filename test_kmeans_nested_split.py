@@ -4,7 +4,7 @@ from wrapper import *
 from badness import *
 from ssltools import *
 
-dataset = get_pendigits()
+dataset = get_yeast()
 
 
 def seed_randomly(prob):
@@ -34,10 +34,10 @@ model = KmeansMockingNestedSplit(dataset.cluster_cnt * 3, dataset.X)
 # badness = model.run(random_seed)
 # print('badness random:', badness)
 
-random_cache = seed_cache('pendigits_prob-0.06.json')
+random_cache = seed_cache('yeast_prob-0.06.json')
 badness = model.run(random_cache)
 print('badness cache 0.06:', badness)
 
-random_cache = seed_cache('pendigits_prob-0.05.json')
+random_cache = seed_cache('yeast_prob-0.05.json')
 badness = model.run(random_cache)
 print('badness cache 0.05:', badness)
