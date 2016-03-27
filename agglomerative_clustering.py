@@ -21,15 +21,12 @@ class AgglomerativeClustering(SkAgglomerativeClustering):
 
     def get_centroids(self):
         clusters_cnt = max(self.labels_) + 1
-        centroids = [None for i in range(clusters_cnt)]
+        centroids = [np.zeros(self.X[0].shape) for i in range(clusters_cnt)]
         cluster_member_cnt = [0 for i in range(clusters_cnt)]
         for i, x in enumerate(self.X):
             belongs = self.labels_[i]
             cluster_member_cnt[belongs] += 1
-            if centroids[belongs] is None:
-                centroids[belongs] = x
-            else:
-                centroids[belongs] += x
+            centroids[belongs] += x
         for i, centroid in enumerate(centroids):
             centroids[i] = centroid / cluster_member_cnt[i]
         return centroids
