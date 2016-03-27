@@ -4,7 +4,7 @@ import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import json
 
-dataset = 'pendigits'
+dataset = 'iris'
 with open('results/badness_on_many_seeding-' + dataset + '.json') as file:
     result = json.load(file)
 

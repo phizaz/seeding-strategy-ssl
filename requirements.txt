@@ -3,3 +3,6 @@ scipy
 scikit-learn
 matplotlib
 pyrsistent
+patsy
+pandas
+statsmodels

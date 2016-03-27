@@ -7,6 +7,7 @@ import time
 from itertools import islice
 import numpy
 import math
+from collections import Counter
 
 class Result:
     def __init__(self, labels, centers):
@@ -151,25 +152,22 @@ def refined_l_method(num_groups, merge_dist):
 
 def get_centroids(X, belong_to):
     clusters_cnt = max(belong_to) + 1
-    centroids = [None for i in range(clusters_cnt)]
+    centroids = [numpy.zeros(X[0].shape) for i in range(clusters_cnt)]
     cluster_member_cnt = [0 for i in range(clusters_cnt)]
     for i, x in enumerate(X):
         belongs = belong_to[i]
         cluster_member_cnt[belongs] += 1
-        if centroids[belongs] is None:
-            centroids[belongs] = x
-        else:
-            centroids[belongs] += x
+        centroids[belongs] += x
     for i, centroid in enumerate(centroids):
         centroids[i] = centroid / cluster_member_cnt[i]
     return centroids
 
-def agglomerative_l_method(x):
+def agglomerative_l_method(X):
     # library: fastcluster
-    merge_hist = linkage(x, method='ward', metric='euclidean', preserve_input=True)
+    merge_hist = linkage(X, method='ward', metric='euclidean', preserve_input=True)
 
     # reorder to be x [2->N]
-    num_groups = [i for i in range(2, len(x) + 1)]
+    num_groups = [i for i in range(2, len(X) + 1)]
     merge_dist = list(reversed([each[2] for each in merge_hist]))
 
     cluster_count = refined_l_method(num_groups, merge_dist)
@@ -178,14 +176,16 @@ def agglomerative_l_method(x):
     # print('cluster_count:', cluster_count)
 
     # make clusters by merging them according to merge_hist
-    disjoint = DisjointSet(len(x))
-    for a, b, _, _ in islice(merge_hist, 0, len(x) - cluster_count):
+    disjoint = DisjointSet(len(X))
+    for a, b, _, _ in islice(merge_hist, 0, len(X) - cluster_count):
         a, b = int(a), int(b)
         disjoint.join(a, b)
 
     # get cluster name for each instance
-    belong_to = [disjoint.parent(i) for i in range(len(x))]
+    belong_to = [disjoint.parent(i) for i in range(len(X))]
     # print('belong_to:', belong_to)
+    # counter = Counter(belong_to)
+    # print('belong_to:', counter)
 
     # rename the cluster name to be 0 -> cluster_count - 1
     cluster_map = {}
@@ -199,7 +199,7 @@ def agglomerative_l_method(x):
 
     # print('belong_to_renamed:', belong_to_renamed)
 
-    centroids = get_centroids(x, belong_to_renamed)
+    centroids = get_centroids(X, belong_to_renamed)
     # print('centroids:', centroids)
 
     return Result(belong_to_renamed, centroids)

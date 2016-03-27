@@ -1,9 +1,8 @@
 from sklearn.cluster import KMeans
-from sklearn.neighbors import BallTree
+from dividable_clustering import DividableClustering
 from collections import Counter
 from l_method import agglomerative_l_method
 from agglomerative_clustering import AgglomerativeClustering
-from dividable_clustering import DividableClustering
 import math
 
 '''
@@ -21,7 +20,6 @@ class Group:
         self.seeding_counter = Counter()
         self.X = []
         self.y_seed = []
-        self.sub_clusters_cnt = None
         self.clustering_model = None
 
     def seeding_cnt(self):
@@ -39,29 +37,102 @@ class Group:
         # returns label, cnt
         return self.seeding_counter.most_common(1).pop()
 
+    def get_seeds(self, X, y_seed):
+        seeds = list(filter(lambda xy: xy[1] is not None,
+                            zip(X, y_seed)))
+        return seeds
+
+    def seeds(self):
+        return self.get_seeds(self.X, self.y_seed)
+
+    def has_collision(self, X, y_seed, model = None):
+        # seeded group is said to be
+        seeds = self.get_seeds(X, y_seed)
+
+        # no seeds, no collision
+        if len(seeds) == 0:
+            return False
+
+        seed_x, seed_y = list(zip(*seeds))
+
+        if model is None:
+            seed_groups = [0 for i in range(len(seed_x))]
+        else:
+            seed_groups = model.predict(seed_x)
+
+        y_by_label = {}
+        for label, y in zip(seed_groups, seed_y):
+            if not label in y_by_label:
+                y_by_label[label] = y
+            elif y_by_label[label] != y:
+                return True
+
+        return False
+
     def cluster(self):
         l_method = agglomerative_l_method(self.X)
-        self.sub_clusters_cnt = len(l_method.cluster_centers_)
-        # print('sub_clusters_cnt:', self.sub_clusters_cnt, 'cnt:', self.cnt)
 
+        # suggest_n = len(l_method.cluster_centers_)
+        # agg = AgglomerativeClustering(suggest_n)
+        # agg.fit(self.X)
+
+        # agg_labels = agg.labels_
+        # l_method_labels = l_method.labels_
+        #
+        # print('agg_labels:', agg_labels)
+        # print('l_method_labels:', l_method_labels)
+
+        # first tier clustering, using agglomerative clustering
         self.clustering_model = DividableClustering()
         self.clustering_model.fit(self.X, l_method.labels_)
 
-class KmeansMockingNestedRatio:
+        # second tier, using kmeans
+        # for suspect_label in range(self.clustering_model.latest_label):
+        #     ind_X = self.clustering_model.get_X_with_idx(suspect_label)
+        #     y_seed = []
+        #     X = []
+        #     for x, idx in ind_X:
+        #         X.append(x)
+        #         y_seed.append(self.y_seed[idx])
+        #
+        #     # no collision in this sub-group
+        #     if not self.has_collision(X, y_seed):
+        #         continue
+        #
+        #     # there is collisions in this sub-group
+        #     low_cnt = 2
+        #     high_cnt = len(X)
+        #     last_possible_labels = None
+        #     while low_cnt <= high_cnt:
+        #         # 1/4 biased binary search
+        #         cluster_cnt = int((high_cnt - low_cnt) * 1/4 + low_cnt)
+        #         kmeans = KMeans(cluster_cnt)
+        #         kmeans.fit(X)
+        #
+        #         if not self.has_collision(X, y_seed, kmeans):
+        #             last_possible_labels = kmeans.labels_
+        #             high_cnt = cluster_cnt - 1
+        #         else:
+        #             low_cnt = cluster_cnt + 1
+        #
+        #         print('split sub_clusters_cnt:', cluster_cnt, 'cnt:', len(X), 'main cnt:', self.cnt)
+        #
+        #     self.clustering_model.split(suspect_label, last_possible_labels)
+        #
+        # self.clustering_model.relabel()
 
-    def __init__(self, clusters_cnt, X):
-        self.kmeans = KMeans(clusters_cnt)
+
+class KmeansMockingNestedSplit:
+
+    def __init__(self, clusters_cnt, X, labels):
+        self.kmeans = DividableClustering()
+        self.kmeans.fit(X, labels)
         self.clusters_cnt = clusters_cnt
         self.X = list(X)
         self.groups = []
 
-        self.prepare(X)
-
     def grouping_result(self):
-        return self.kmeans.labels_
-
-    def prepare(self, X):
-        self.kmeans.fit(X)
+        return self.kmeans.Y()
 
     def score(self, group):
         assert isinstance(group, Group)
@@ -75,7 +146,10 @@ class KmeansMockingNestedRatio:
         # cluster the sub-clusters
         group.cluster()
 
-        count_by_label = Counter(group.clustering_model.predict_nn(group.X))
+        count_by_label = Counter(group.clustering_model.predict(group.X))
+        # count_by_label = {}
+        # for label in range(group.clustering_model.latest_label):
+        #     count_by_label[label] = len(group.clustering_model.get_X_with_idx(label))
 
         # print('count by label:', count_by_label)
 
@@ -83,7 +157,7 @@ class KmeansMockingNestedRatio:
         seeds = list(filter(lambda xy: xy[1] is not None,
                             zip(group.X, group.y_seed)))
         seed_x, seed_y = list(zip(*seeds))
-        seeded_labels = group.clustering_model.predict_nn(seed_x)
+        seeded_labels = group.clustering_model.predict(seed_x)
 
         # print('seeded labels:', seeded_labels)
 

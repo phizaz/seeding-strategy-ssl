@@ -4,6 +4,7 @@ from collections import Counter
 from l_method import agglomerative_l_method
 from agglomerative_clustering import AgglomerativeClustering
 import math
+import numpy as np
 
 '''
 Kmeans Mocking Nested Ratio (with bounds)
@@ -37,10 +38,17 @@ class Group:
         # returns label, cnt
         return self.seeding_counter.most_common(1).pop()
 
-    def has_collision(self, X, y_seed, model = None):
-        # seeded group is said to be
+    def get_seeds(self, X, y_seed):
         seeds = list(filter(lambda xy: xy[1] is not None,
                             zip(X, y_seed)))
+        return seeds
+
+    def seeds(self):
+        return self.get_seeds(self.X, self.y_seed)
+
+    def has_collision(self, X, y_seed, model = None):
+        # seeded group is said to be
+        seeds = self.get_seeds(X, y_seed)
 
         # no seeds, no collision
         if len(seeds) == 0:
@@ -53,29 +61,24 @@ class Group:
         else:
             seed_groups = model.predict(seed_x)
 
-        label_by_group = {}
-        for cluster, label in zip(seed_groups, seed_y):
-            if not cluster in label_by_group:
-                label_by_group[cluster] = label
-            elif label_by_group[cluster] != label:
+        y_by_label = {}
+        for label, y in zip(seed_groups, seed_y):
+            if not label in y_by_label:
+                y_by_label[label] = y
+            elif y_by_label[label] != y:
                 return True
 
         return False
 
     def cluster(self):
         l_method = agglomerative_l_method(self.X)
-        suggest_cluster_cnt = len(l_method.cluster_centers_)
-        # print('sub_clusters_cnt:', self.sub_clusters_cnt, 'cnt:', self.cnt)
-
-        agg = AgglomerativeClustering(suggest_cluster_cnt)
-        agg.fit(self.X)
 
         # first tier clustering, using agglomerative clustering
         self.clustering_model = DividableClustering()
-        self.clustering_model.fit(self.X, agg.labels_)
+        self.clustering_model.fit(self.X, l_method.labels_)
 
         # second tier, using kmeans
-        for suspect_label in range(suggest_cluster_cnt):
+        for suspect_label in range(self.clustering_model.latest_label):
             ind_X = self.clustering_model.get_X_with_idx(suspect_label)
             y_seed = []
             X = []
@@ -92,6 +95,7 @@ class Group:
             high_cnt = len(X)
             last_possible_labels = None
             while low_cnt <= high_cnt:
+                # 1/4 biased binary search
                 cluster_cnt = int((high_cnt - low_cnt) * 1/4 + low_cnt)
                 kmeans = KMeans(cluster_cnt)
                 kmeans.fit(X)
@@ -102,8 +106,7 @@ class Group:
                 else:
                     low_cnt = cluster_cnt + 1
 
-                print('split sub_clusters_cnt:', cluster_cnt, 'cnt:', len(X), 'main cnt:', self.cnt)
-
+            print('split sub_clusters_cnt:', cluster_cnt, 'cnt:', len(X), 'main cnt:', self.cnt)
             self.clustering_model.split(suspect_label, last_possible_labels)
 
         self.clustering_model.relabel()
@@ -137,35 +140,32 @@ class KmeansMockingNestedSplit:
         # cluster the sub-clusters
         group.cluster()
 
-        count_by_group = Counter(group.clustering_model.predict(group.X))
+        count_by_label = Counter(group.clustering_model.predict_nn(group.X))
+
+        # print('count by label:', count_by_label)
 
         # seeded group is said to be
         seeds = list(filter(lambda xy: xy[1] is not None,
                             zip(group.X, group.y_seed)))
-
         seed_x, seed_y = list(zip(*seeds))
-        seed_groups = group.clustering_model.predict(seed_x)
+        seeded_labels = group.clustering_model.predict_nn(seed_x)
+
+        # print('seeded labels:', seeded_labels)
+        # print('seeded labels:', group.clustering_model.predict_centroids(seed_x))
 
         # no of points in seeded groups (certain groups)
-        certain_cnt = sum(count_by_group[g] for g in set(seed_groups))
+        certain_cnt = sum(count_by_label[l] for l in set(seeded_labels))
         uncertain_cnt = group.cnt - certain_cnt
 
-        label_cnt_by_group = {}
-        for g, label in zip(seed_groups, seed_y):
-            if not g in label_cnt_by_group:
-                label_cnt_by_group[g] = Counter()
-            label_cnt_by_group[g][label] += 1
-
-        # print('label_cnt_by_group:', label_cnt_by_group)
-
-        major_label, _ = group.major()
-
-        def sum_seeds_in_group(g):
-            return sum(seed_cnt for _, seed_cnt in label_cnt_by_group[g].items())
-
+        # count the major_y clusters members
+        major_y, _ = group.major()
         major_cnt = 0
-        for g in set(seed_groups):
-            major_cnt += count_by_group[g] * label_cnt_by_group[g][major_label] / sum_seeds_in_group(g)
+        added = set()
+        for label, y in zip(seeded_labels, seed_y):
+            if y == major_y and label not in added:
+                # don't count twice !
+                added.add(label)
+                major_cnt += count_by_label[label]
 
         lower_bound = major_cnt
         upper_bound = major_cnt + uncertain_cnt

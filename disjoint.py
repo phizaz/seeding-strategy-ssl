@@ -15,9 +15,8 @@ class DisjointSet:
         if a == b:
             raise Exception('joining the same set')
 
-        self.level_parent[a] = b
-        # on merge create a new 'cluster' named self.highest and increasing...
-        self.level_parent[self.highest] = b
+        self.level_parent[a] = self.highest
+        self.level_parent[b] = self.highest
         self.highest += 1
 
     def common(self, a, b):

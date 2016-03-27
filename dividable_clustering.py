@@ -22,6 +22,21 @@ class DividableClustering:
             centroid_by_label[label] = self.get_centroid(X)
         return centroid_by_label
 
+    def X(self):
+        X_pool = []
+        for _, ind_X in self.X_by_label.items():
+            X_pool += ind_X
+        X_pool.sort(key=lambda x: x[1])
+        return self.X_of(X_pool)
+
+    def Y(self):
+        Y_pool = []
+        for label, ind_X in self.X_by_label.items():
+            indexes = list(map(lambda x: x[1], ind_X))
+            Y_pool += [(label, idx) for i, idx in enumerate(indexes)]
+        Y_pool.sort(key=lambda x: x[1])
+        return self.X_of(Y_pool)
+
     def attach_idx(self, X, indexes):
         return list(zip(X, indexes))
 
@@ -70,10 +85,20 @@ class DividableClustering:
 
         self.latest_label = target
 
-    def predict(self, X):
+    def predict_centroids(self, X):
         labels = sorted(self.X_by_label.keys())
         centroids = [self.get_centroid(self.X_by_label[i]) for i in labels]
 
+        # print('centroids:', sorted(centroids, key=lambda x: x[0]))
+
         knn = KNeighborsClassifier(1)
         knn.fit(centroids, labels)
+        return knn.predict(X)
+
+    def predict_nn(self, X):
+        X_train = self.X()
+        Y_train = self.Y()
+
+        knn = KNeighborsClassifier(1)
+        knn.fit(X_train, Y_train)
         return knn.predict(X)

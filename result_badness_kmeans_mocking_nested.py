@@ -10,7 +10,7 @@ from cache import StorageCache
 datasets = [
     # get_iris(),
     get_pendigits(),
-    # get_yeast(),
+    get_yeast(),
     # get_satimage(),
     # get_banknote(),
     # get_spam(), # prone to imbalanced problem
