@@ -5,8 +5,11 @@ from kmeans_mocking_nested_split import KmeansMockingNestedSplit
 import matplotlib.pyplot as plt
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
+from pipe import Pipe
+from pipetools import *
+from ssltools import *
 
-dataset = get_iris()
+dataset = get_yeast()
 
 # pca = PCA(2)
 # pca.fit(dataset.X)
@@ -31,9 +34,18 @@ def seed_cache(file):
     y_seed = np.array(cache.get())
     return y_seed
 
+def seed_randomly(prob):
+    pipe = Pipe() \
+        .x(dataset.X) \
+        .y(dataset.Y) \
+        .y_seed(seeding_random(prob)) \
+        .connect(stop())
+    return pipe['y_seed']
+
 badness_engine = KmeansMockingNestedSplit(dataset.cluster_cnt * 3, dataset.X)
 
-random_cache = seed_cache('iris_prob-0.06.json')
+random_cache = seed_cache('yeast_prob-0.05.json')
+random_seed = seed_randomly(1.0)
 badness = badness_engine.run(random_cache)
 print('badness:', badness)
 

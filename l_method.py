@@ -162,9 +162,9 @@ def get_centroids(X, belong_to):
         centroids[i] = centroid / cluster_member_cnt[i]
     return centroids
 
-def agglomerative_l_method(X):
+def agglomerative_l_method(X, method='ward'):
     # library: fastcluster
-    merge_hist = linkage(X, method='ward', metric='euclidean', preserve_input=True)
+    merge_hist = linkage(X, method=method, metric='euclidean', preserve_input=True)
 
     # reorder to be x [2->N]
     num_groups = [i for i in range(2, len(X) + 1)]

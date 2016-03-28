@@ -9,7 +9,7 @@ import numpy as np
 '''
 Kmeans Mocking Nested Ratio (with bounds)
 An attemp to tighten the lower bound
-kmeans with sub-groups (using l-method + agglomerative clustering)
+kmeans with sub-groups (using l-method + kmeans)
 — tighter lower bound — ignore the multi label seeded groups
 and use the majority instead
 '''
@@ -22,6 +22,7 @@ class Group:
         self.X = []
         self.y_seed = []
         self.clustering_model = None
+        self.splitting_score = 0
 
     def seeding_cnt(self):
         return sum(cnt for _, cnt in self.seeding_counter.items())
@@ -70,8 +71,8 @@ class Group:
 
         return False
 
-    def cluster(self):
-        l_method = agglomerative_l_method(self.X)
+    def cluster(self, method='ward'):
+        l_method = agglomerative_l_method(self.X, method=method)
 
         # first tier clustering, using agglomerative clustering
         self.clustering_model = DividableClustering()
@@ -106,19 +107,22 @@ class Group:
                 else:
                     low_cnt = cluster_cnt + 1
 
+            self.splitting_score += cluster_cnt
             print('split sub_clusters_cnt:', cluster_cnt, 'cnt:', len(X), 'main cnt:', self.cnt)
             self.clustering_model.split(suspect_label, last_possible_labels)
 
         self.clustering_model.relabel()
+        print('splitting_score:', self.splitting_score)
 
 
 class KmeansMockingNestedSplit:
 
-    def __init__(self, clusters_cnt, X):
+    def __init__(self, clusters_cnt, X, method='ward'):
         self.kmeans = KMeans(clusters_cnt)
         self.clusters_cnt = clusters_cnt
         self.X = list(X)
         self.groups = []
+        self.method = method
 
         self.prepare(X)
 
@@ -138,7 +142,7 @@ class KmeansMockingNestedSplit:
             return 0, 0
 
         # cluster the sub-clusters
-        group.cluster()
+        group.cluster(method=self.method)
 
         count_by_label = Counter(group.clustering_model.predict_nn(group.X))
 

@@ -1,6 +1,7 @@
 from pipe import Pipe
 from wrapper import kernel_density_estimation
-from pipetools import dump, evaluate, load_x, start_timer, stop_timer
+from pipetools import dump, evaluate, start_timer, stop_timer
+from utils import load_x
 
 # file = './datasets/pendigits/pendigits.tra'
 file = './datasets/iris/iris.data'

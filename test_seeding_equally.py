@@ -1,6 +1,6 @@
 from pipe import Pipe
-from pipetools import *
 from ssltools import *
+from utils import load_x, load_y
 
 file = './datasets/iris/iris.data'
 

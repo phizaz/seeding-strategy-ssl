@@ -8,8 +8,8 @@ import numpy as np
 from cache import StorageCache
 
 datasets = [
-    # get_iris(),
-    get_pendigits(),
+    get_iris(),
+    # get_pendigits(),
     get_yeast(),
     # get_satimage(),
     # get_banknote(),
@@ -111,16 +111,19 @@ def run_and_save(dataset):
             .pipe(badness_naive(prepare=True)) \
             .pipe(let('kmeans_clusters_cnt', dataset.cluster_cnt * 3)) \
             .pipe(badness_kmeans_mocking_nested_ratio(prepare=True)) \
-            .pipe(badness_kmeans_mocking_nested_split(prepare=True)) \
+            .pipe(badness_kmeans_mocking_nested_split(prepare=True, method='ward')) \
+            .pipe(badness_kmeans_mocking_nested_split(prepare=True, method='single')) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_kmeans_mocking_nested_ratio()) \
-                .pipe(badness_kmeans_mocking_nested_split()) \
+                .pipe(badness_kmeans_mocking_nested_split(method='ward')) \
+                .pipe(badness_kmeans_mocking_nested_split(method='single')) \
                 .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'kmeans_3')) \
             .merge('result', group('evaluation_kmeans_3',
                                    'label_correctness_kmeans_3',
                                    'badness_kmeans_mocking_nested_ratio',
-                                   'badness_kmeans_mocking_nested_split',
+                                   'badness_kmeans_mocking_nested_split_ward',
+                                   'badness_kmeans_mocking_nested_split_single',
                                    'badness_naive',
                                    'name')) \
             .connect(stop())
@@ -132,11 +135,13 @@ def run_and_save(dataset):
             .pipe(badness_naive(prepare=True)) \
             .pipe(let('kmeans_clusters_cnt', dataset.cluster_cnt * 3)) \
             .pipe(badness_kmeans_mocking_nested_ratio(prepare=True)) \
-            .pipe(badness_kmeans_mocking_nested_split(prepare=True)) \
+            .pipe(badness_kmeans_mocking_nested_split(prepare=True, method='ward')) \
+            .pipe(badness_kmeans_mocking_nested_split(prepare=True, method='single')) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
                 .pipe(badness_kmeans_mocking_nested_ratio()) \
-                .pipe(badness_kmeans_mocking_nested_split()) \
+                .pipe(badness_kmeans_mocking_nested_split(method='ward')) \
+                .pipe(badness_kmeans_mocking_nested_split(method='single')) \
                 .split(10, cross('y_seed')) \
                     .pipe(copy('y', 'y_ori')) \
                     .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'kmeans_3')) \
@@ -147,7 +152,8 @@ def run_and_save(dataset):
             .merge('result', group('evaluation_kmeans_3',
                                    'label_correctness_kmeans_3',
                                    'badness_kmeans_mocking_nested_ratio',
-                                   'badness_kmeans_mocking_nested_split',
+                                   'badness_kmeans_mocking_nested_split_ward',
+                                   'badness_kmeans_mocking_nested_split_single',
                                    'badness_naive',
                                    'name')) \
             .connect(stop())

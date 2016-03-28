@@ -1,21 +1,5 @@
 import time
-
 from util import *
-
-
-def load_x(file_path, delimiter = ',', remove_label = lambda x: x[:-1]):
-    dataset = load_data(file_path, delimiter=delimiter)
-    points = list(map(remove_label, dataset))
-    points = to_number(points)
-    points = to_list(points)
-    points = rescale(points)
-    return points
-
-def load_y(file_path, delimiter = ',', get_label = lambda x: x[-1]):
-    dataset = load_data(file_path, delimiter=delimiter)
-    points = map(get_label, dataset)
-    points = to_list(points)
-    return points
 
 def assign(field, fn):
     def fn(inst):

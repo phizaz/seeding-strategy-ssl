@@ -1,8 +1,8 @@
-from pipe import Pipe
-from wrapper import recursive_agglomerative_l_method, agglomerative_l_method
-from pipetools import *
-from plottools import scatter2d
 import matplotlib.pyplot as plt
+from pipe import Pipe
+from pipetools import *
+from utils import load_x
+from wrapper import agglomerative_l_method
 
 # file = './datasets/pendigits/pendigits.tra'
 file = './datasets/iris/iris.data'

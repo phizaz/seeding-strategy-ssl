@@ -2,6 +2,7 @@ from multipipetools import average
 from pipe import Pipe
 from pipetools import *
 from ssltools import *
+from utils import load_x, load_y
 from wrapper import agglomerative_l_method, knn
 
 file = './datasets/iris/iris.data'

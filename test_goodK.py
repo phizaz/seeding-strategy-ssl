@@ -1,6 +1,5 @@
-from pipe import *
+from utils import load_x, load_y
 from wrapper import *
-from pipetools import *
 
 file = './datasets/pendigits/pendigits.tra'
 file_test = './datasets/pendigits/pendigits.tes'

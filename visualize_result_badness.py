@@ -4,7 +4,7 @@ import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import json
 
-dataset = 'iris'
+dataset = 'yeast'
 with open('results/badness_on_many_seeding-' + dataset + '.json') as file:
     result = json.load(file)
 
@@ -53,7 +53,8 @@ def plot(ax, sort_fn, name=''):
         # 'badness_kmeans_mocking': result['badness_kmeans_mocking'],
         # 'badness_kmeans_mocking_nested': result['badness_kmeans_mocking_nested'],
         'badness_kmeans_mocking_nested_ratio': result['badness_kmeans_mocking_nested_ratio'],
-        'badness_kmeans_mocking_nested_split': result['badness_kmeans_mocking_nested_split'],
+        'badness_kmeans_mocking_nested_split_ward': result['badness_kmeans_mocking_nested_split_ward'],
+        'badness_kmeans_mocking_nested_split_single': result['badness_kmeans_mocking_nested_split_single'],
         'badness_naive_md':
             list(map(lambda x: x['md'], result['badness_naive'])),
         'names': result['name'],
@@ -114,7 +115,8 @@ def plot(ax, sort_fn, name=''):
 
     # ax.plot(x, col['badness_kmeans_mocking_nested'], 'k', color='red', label='kmn')
     ax.plot(x, col['badness_kmeans_mocking_nested_ratio'], 'k', color='orange', label='kmn')
-    ax.plot(x, col['badness_kmeans_mocking_nested_split'], 'k', color='blue', label='kmn')
+    ax.plot(x, col['badness_kmeans_mocking_nested_split_ward'], 'k', color='blue', label='kmn')
+    ax.plot(x, col['badness_kmeans_mocking_nested_split_single'], 'k', color='green', label='kmn')
 
     # ax.plot(x, col['badness_majority_voronoid'], 'k', color='red', label='naive')
     ax.plot(x, col['badness_naive_md'], 'k', color='grey', label='naive')

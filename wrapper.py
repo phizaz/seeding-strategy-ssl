@@ -441,17 +441,17 @@ def badness_kmeans_mocking_nested_ratio(prepare=False):
 
     return modes[prepare]
 
-def badness_kmeans_mocking_nested_split(prepare=False):
+def badness_kmeans_mocking_nested_split(prepare=False, method='ward'):
 
     def prepare_fn(inst):
         x, clusters_cnt = requires(['x', 'kmeans_clusters_cnt'], inst)
-        badness_engine = KmeansMockingNestedSplit(clusters_cnt, x)
-        return inst.set('kmeans_mocking_nested_split_engine', badness_engine)
+        badness_engine = KmeansMockingNestedSplit(clusters_cnt, x, method)
+        return inst.set('kmeans_mocking_nested_split_engine_' + method, badness_engine)
 
     def fn(inst):
         y_seed = requires('y_seed', inst)
-        badness_engine = requires('kmeans_mocking_nested_split_engine', inst)
-        return inst.set('badness_kmeans_mocking_nested_split',
+        badness_engine = requires('kmeans_mocking_nested_split_engine_' + method, inst)
+        return inst.set('badness_kmeans_mocking_nested_split_' + method,
                         badness_engine.run(y_seed))
 
     modes = {
@@ -460,6 +460,17 @@ def badness_kmeans_mocking_nested_split(prepare=False):
     }
 
     return modes[prepare]
+
+def goodness_cluster_mocking_nested_split(method='ward'):
+
+    def fn(inst):
+        x, labels = requires(['x', 'cluster_labels'], inst)
+        y_seed = requires('y_seed', inst)
+        badness_engine = ClusterMockingNestedSplit(x, labels, method)
+        return inst.set('goodness_cluster_mocking_nested_split_' + method,
+                        badness_engine.run(y_seed))
+
+    return fn
 
 def badness_naive(prepare=False):
     def prepare_fn(inst):

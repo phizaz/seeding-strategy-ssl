@@ -1,19 +1,28 @@
-import csv
-
-import collections
-
-import sklearn.neighbors
-
 import numpy
 import numpy as np
 import random
 from collections import Counter
-from itertools import chain
 from operator import itemgetter
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cross_validation import cross_val_score
 import json
 from sklearn.neighbors import BallTree
+import matplotlib.cm as cmx
+import matplotlib.colors as colors
+
+def load_x(file_path, delimiter = ',', remove_label = lambda x: x[:-1]):
+    dataset = load_data(file_path, delimiter=delimiter)
+    points = list(map(remove_label, dataset))
+    points = to_number(points)
+    points = to_list(points)
+    return points
+
+
+def load_y(file_path, delimiter = ',', get_label = lambda x: x[-1]):
+    dataset = load_data(file_path, delimiter=delimiter)
+    points = map(get_label, dataset)
+    points = to_list(points)
+    return points
 
 def load_data(file, delimiter=','):
     result = []
@@ -30,10 +39,13 @@ def load_data(file, delimiter=','):
     return result
 
 def to_number(data):
+    # convert data from string to float based
     return map(lambda row: map(float, row),
                data)
 
 def rescale(data):
+    # rescale data to be in range [0, 1]
+    # this shall not be invoked separately !!!
     dataT = numpy.array(data).transpose()
 
     def rescale_row(row):
@@ -192,3 +204,17 @@ def get_centroid_weights(X, centroids):
         weights[idx] += 1
 
     return weights
+
+def get_cmap(N):
+    '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct
+        RGB color.'''
+    color_norm = colors.Normalize(vmin=0, vmax=N - 1)
+    scalar_map = cmx.ScalarMappable(norm=color_norm, cmap='hsv')
+
+    def map_index_to_rgb_color(index):
+        return scalar_map.to_rgba(index)
+
+    def static(index):
+        return 'rgb'[index]
+
+    return map_index_to_rgb_color
