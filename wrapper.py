@@ -138,7 +138,7 @@ def kernel_density_estimation(*args, **margs):
 
     return fn
 
-def badness_denclue(bandwidth=None, prepare=False, name=None):
+def badness_denclue(bandwidth=None, prepare=False, name=None, id='default'):
     # with given name, it will cache
 
     def prepare_fn(inst):
@@ -171,8 +171,8 @@ def badness_denclue(bandwidth=None, prepare=False, name=None):
                 cache.save()
 
         return inst\
-            .set('denclue_centroids', centroids)\
-            .set('denclue_bandwidth', bandwidth)
+            .set('denclue_centroids_' + id, centroids)\
+            .set('denclue_bandwidth_' + id, bandwidth)
 
     def run(mode='normal'):
 
@@ -182,7 +182,7 @@ def badness_denclue(bandwidth=None, prepare=False, name=None):
             good_centroids\
                 = requires(['x',
                             'y_seed',
-                            'denclue_centroids'],
+                            'denclue_centroids_' + id],
                            inst)
 
             # build seeding list
@@ -199,7 +199,12 @@ def badness_denclue(bandwidth=None, prepare=False, name=None):
 
             # print('badness_denclue:', badness)
 
-            return inst.set('badness_denclue', badness)
+            if id == 'default':
+                field = 'badness_denclue'
+            else:
+                field = 'badness_denclue_' + id
+
+            return inst.set(field, badness)
 
         def weighted(inst):
             x, \
@@ -207,7 +212,7 @@ def badness_denclue(bandwidth=None, prepare=False, name=None):
             centroids, \
                 = requires(['x',
                             'y_seed',
-                            'denclue_centroids'],
+                            'denclue_centroids_' + id],
                            inst)
 
             # build seeding list
@@ -225,7 +230,12 @@ def badness_denclue(bandwidth=None, prepare=False, name=None):
                 'voronoid_filling': voronoid_filling(seeding, centroids, weights)
             }
 
-            return inst.set('badness_denclue_weighted', badness)
+            if id == 'default':
+                field = 'badness_denclue_weighted'
+            else:
+                field = 'badness_denclue_weighted_' + id
+
+            return inst.set(field, badness)
 
         modes = {
             'normal': normal,
@@ -460,6 +470,28 @@ def badness_kmeans_mocking_nested_split(prepare=False, method='ward'):
     }
 
     return modes[prepare]
+
+def goodness_cluster_mocking():
+
+    def fn(inst):
+        x, labels = requires(['x', 'cluster_labels'], inst)
+        y_seed = requires('y_seed', inst)
+        badness_engine = ClusterMocking(x, labels)
+        return inst.set('goodness_cluster_mocking',
+                        badness_engine.run(y_seed))
+
+    return fn
+
+def goodness_cluster_mocking_nested_ratio():
+
+    def fn(inst):
+        x, labels = requires(['x', 'cluster_labels'], inst)
+        y_seed = requires('y_seed', inst)
+        badness_engine = ClusterMockingNestedRatio(x, labels)
+        return inst.set('goodness_cluster_mocking_nested_ratio',
+                        badness_engine.run(y_seed))
+
+    return fn
 
 def goodness_cluster_mocking_nested_split(method='ward'):
 

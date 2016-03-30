@@ -5,6 +5,8 @@ from kmeans_mocking import KmeansMocking
 from kmeans_mocking_nested import KmeansMockingNested
 from kmeans_mocking_nested_ratio import KmeansMockingNestedRatio
 from kmeans_mocking_nested_split import KmeansMockingNestedSplit
+from cluster_mocking import ClusterMocking
+from cluster_mocking_nested_ratio import ClusterMockingNestedRatio
 from cluster_mocking_nested_split import ClusterMockingNestedSplit
 
 def rmsd_nearest_from_centroids(seeding, centroids):

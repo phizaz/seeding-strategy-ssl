@@ -200,5 +200,4 @@ class ClusterMockingNestedSplit:
         for x, group, label in zip(self.X, self.grouping_result(), seeding_y):
             self.groups[group].add(x, label)
 
-        # return self.badness()
         return self.goodness()

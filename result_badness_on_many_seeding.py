@@ -7,29 +7,30 @@ from wrapper import *
 import numpy as np
 from cache import StorageCache
 
+'''
+generate results for
+- agglomerative l-method hierarchical clustering
+- kde + denclue (hill climbing)
+- naive
+'''
+
 datasets = [
-    get_iris(),
-    # get_pendigits(),
-    # get_yeast(),
-    # get_satimage(),
-    # get_banknote(),
-    # get_eeg(), # is not suitable for SSL
-    # get_spam(), # prone to imbalanced problem
-    # get_letter(), # large dataset
-    # get_magic(), # super slow for kde hill climbing
+    get_iris_with_test(bandwidth='cv_ml').rescale(),
+    get_pendigits(bandwidth='cv_ml').rescale(),
+    get_yeast_with_test(bandwidth='cv_ml').rescale(),
+    get_satimage(bandwidth='cv_ml').rescale(),
+    get_banknote_with_test(bandwidth='cv_ml').rescale(),
+    get_spam_with_test(bandwidth='cv_ml').rescale(),
+    get_drd_with_test(bandwidth='cv_ml').rescale(),
+    get_imagesegment(bandwidth='cv_ml').rescale(),
+    get_pageblock_with_test(bandwidth='cv_ml').rescale(),
+    get_statlogsegment_with_test(bandwidth='cv_ml').rescale(),
+    get_winequality_with_test('white', bandwidth='cv_ml').rescale(),
+    get_winequality_with_test('red', bandwidth='cv_ml').rescale(),
 ]
 
-def kmeans_ssl(clusters, neighbors, field):
-    def fn(pipe):
-        p = pipe \
-            .pipe(kmeans(clusters)) \
-            .y(label_consensus()) \
-            .pipe(knn(neighbors)) \
-            .pipe(predict()) \
-            .pipe(evaluate())\
-            .pipe(copy('evaluation', field))
-        return p
-    return fn
+datasets.sort(key=lambda dataset: len(dataset.X))
+print('datasets:', ', '.join(list(map(lambda dataset: dataset.name, datasets))))
 
 def create_seeding_fns(dataset):
 
@@ -82,24 +83,6 @@ def seeder(seeding_fns, seeding_names, name):
 
     return map_fn
 
-def create_voronoid_badnesses():
-    params = []
-    names = []
-    space = np.logspace(0, -3, 20)
-
-    for c in space:
-        params.append(c)
-        names.append('c-' + str(c))
-
-    return params, names
-
-def voronoid_badnesses(params, names):
-    def map_fn(inst, idx, total):
-        # print('c:', params[idx])
-        return inst.set('voronoid_c', params[idx])
-
-    return map_fn
-
 def run_and_save(dataset):
     print('dataset:', dataset.name)
     print('has_testdata:', dataset.has_testdata())
@@ -107,8 +90,18 @@ def run_and_save(dataset):
     seeding_fns, seeding_names = create_seeding_fns(dataset)
     print('seeding_names:', seeding_names)
 
-    voronoid_params, voronoid_names = create_voronoid_badnesses()
-    print('voronoid_params:', voronoid_params)
+    def kmeans_ssl(clusters, neighbors, field):
+        def fn(pipe):
+            p = pipe \
+                .pipe(kmeans(clusters)) \
+                .y(label_consensus()) \
+                .pipe(knn(neighbors)) \
+                .pipe(predict()) \
+                .pipe(evaluate()) \
+                .pipe(copy('evaluation', field))
+            return p
+
+        return fn
 
     def normal():
         return Pipe() \
@@ -119,73 +112,22 @@ def run_and_save(dataset):
             .pipe(badness_naive(prepare=True)) \
             .pipe(badness_agglomeratvie_l_method(prepare=True, name=dataset.name)) \
             .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True, name=dataset.name)) \
-            .pipe(badness_hierarchical_voronoid_filling(prepare=True))\
-            .pipe(badness_majority_voronoid(prepare=True))\
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
                 .pipe(badness_naive()) \
-                .pipe(badness_agglomeratvie_l_method()(mode='weighted')) \
-                .pipe(badness_denclue()(mode='weighted')) \
-                .pipe(let('voronoid_sigmoid', 1e-9))\
-                .split(len(voronoid_params), voronoid_badnesses(voronoid_params, voronoid_names))\
-                    .pipe(badness_hierarchical_voronoid_filling())\
-                .merge(['badness_hierarchical_voronoid_filling',
-                        'voronoid_c'],
-                       flat_group('badness_hierarchical_voronoid_filling'),
-                       flat_group('voronoid_c'))\
-                .pipe(badness_majority_voronoid())\
-                .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
+                .pipe(badness_agglomeratvie_l_method()(mode='normal')) \
+                .pipe(badness_denclue()(mode='normal')) \
                 .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
-            .merge('result', group('evaluation_kmeans_1',
-                                   'evaluation_kmeans_3',
-                                   'badness_l_method_weighted',
-                                   'badness_denclue_weighted',
-                                   'badness_hierarchical_voronoid_filling',
+            .merge('result', group('evaluation_kmeans_3',
+                                   'badness_l_method',
+                                   'badness_denclue',
                                    'badness_naive',
-                                   'voronoid_c',
-                                   'badness_majority_voronoid',
-                                   'name')) \
-            .connect(stop())
-
-    def cv():
-        return Pipe() \
-            .x(dataset.X) \
-            .y(dataset.Y) \
-            .pipe(badness_naive(prepare=True)) \
-            .pipe(badness_agglomeratvie_l_method(prepare=True, name=dataset.name)) \
-            .pipe(badness_denclue(bandwidth=dataset.bandwidth, prepare=True, name=dataset.name)) \
-            .pipe(badness_hierarchical_voronoid_filling(prepare=True))\
-            .pipe(badness_majority_voronoid(prepare=True))\
-            .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
-                .pipe(badness_naive()) \
-                .pipe(badness_agglomeratvie_l_method()(mode='weighted')) \
-                .pipe(badness_denclue()(mode='weighted')) \
-                .pipe(let('voronoid_sigmoid', 1e-9))\
-                .split(len(voronoid_params), voronoid_badnesses(voronoid_params, voronoid_names))\
-                    .pipe(badness_hierarchical_voronoid_filling())\
-                .merge(['badness_hierarchical_voronoid_filling',
-                        'voronoid_c'],
-                       flat_group('badness_hierarchical_voronoid_filling'),
-                       flat_group('voronoid_c'))\
-                .pipe(badness_majority_voronoid())\
-                .split(10, cross('y_seed')) \
-                    .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
-                    .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
-                .merge(['evaluation_kmeans_1', 'evaluation_kmeans_3'], total('evaluation_kmeans_1'), total('evaluation_kmeans_3')) \
-            .merge('result', group('evaluation_kmeans_1',
-                                   'evaluation_kmeans_3',
-                                   'badness_l_method_weighted',
-                                   'badness_denclue_weighted',
-                                   'badness_hierarchical_voronoid_filling',
-                                   'badness_majority_voronoid',
-                                   'badness_naive',
-                                   'voronoid_c',
                                    'name')) \
             .connect(stop())
 
     if dataset.has_testdata():
         fn = normal
     else:
-        fn = cv
+        raise Exception('no cv anymore!')
 
     result = fn()
     # result = fn(dataset, [0.2])

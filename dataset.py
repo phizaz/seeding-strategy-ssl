@@ -1,5 +1,5 @@
 from functools import partial
-from kde import get_bandwidth
+from bandwidth_selection import BandwidthSelection
 from util import *
 from pipetools import *
 from os.path import join, exists
@@ -12,7 +12,8 @@ class Dataset:
                  Y_test=None,
                  path=None,
                  train_file=None,
-                 test_file=None):
+                 test_file=None,
+                 bandwidth=None):
         self.name = dataset_name
         self.X = X
         self.Y = Y
@@ -24,7 +25,9 @@ class Dataset:
         self.cluster_cnt = self.count_cluster()
         self.K_for_KNN = self.calculate_K_for_KNN()
 
-        # self.bandwidth = self.get_bandwidth()
+        if bandwidth is not None:
+            self.bandwidth_type = bandwidth
+            self.bandwidth = self.get_bandwidth(type=bandwidth)
 
     def count_cluster(self):
         counter = Counter(self.Y)
@@ -41,6 +44,8 @@ class Dataset:
         return self
 
     def calculate_K_for_KNN(self):
+        self.rescale()
+
         storage_file = './storage/dataset_' + self.name + '.json'
 
         if not exists(storage_file):
@@ -75,7 +80,14 @@ class Dataset:
         else:
             raise Exception('X and Y are not properly configured')
 
-    def get_bandwidth(self, force=False):
+    def get_bandwidth(self, type, force=False):
+        self.rescale()
+
+        get_bandwidth = {
+            'rot': BandwidthSelection.gaussian_distribution,
+            'cv_ml': BandwidthSelection.cv_maximum_likelihood,
+        }
+
         storage_file = './storage/dataset_' + self.name + '.json'
 
         if not exists(storage_file):
@@ -88,25 +100,32 @@ class Dataset:
             except ValueError:
                 data = {}
 
-        if not force and 'bandwidth' in data:
+        field = 'bandwidth_' + type
+
+        if not force and field in data:
             # needed information is in the file
-            bandwidth = data['bandwidth']
+            bandwidth = data[field]
             return bandwidth
 
         if self.X is not None:
-            data['bandwidth'] = get_bandwidth(self.X)
+            print('calculating bandwidth (', self.bandwidth_type, ') for', self.name)
+            data[field] = get_bandwidth[type](self.X)
             # save to database
             with open(storage_file, 'w') as file:
                 json.dump(data, file)
 
-            return data['bandwidth']
+            return data[field]
         else:
             raise Exception('X is not properly configured')
 
     def has_testdata(self):
         return self.X_test is not None and self.Y_test is not None
 
-def get_iris():
+'''
+original datasets
+'''
+
+def get_iris(bandwidth=None):
     path = './datasets/iris'
     file = join(path, 'iris.data')
     return Dataset(
@@ -114,10 +133,11 @@ def get_iris():
         load_x(file),
         load_y(file),
         path=path,
-        train_file=file
+        train_file=file,
+        bandwidth=bandwidth,
     )
 
-def get_yeast():
+def get_yeast(bandwidth=None):
     path = './datasets/yeast'
     file = join(path, 'yeast.data')
     return Dataset(
@@ -126,9 +146,10 @@ def get_yeast():
         load_y(file, ' ', lambda row: row[-1]),
         path=path,
         train_file=file,
+        bandwidth=bandwidth,
     )
 
-def get_letter():
+def get_letter(bandwidth=None):
     path = './datasets/letter'
     file = join(path, 'letter-recognition.data')
     return Dataset(
@@ -136,10 +157,11 @@ def get_letter():
         load_x(file, ',', lambda row: row[1:]),
         load_y(file, ',', lambda row: row[0]),
         path=path,
-        train_file=file
+        train_file=file,
+        bandwidth=bandwidth,
     )
 
-def get_pendigits():
+def get_pendigits(bandwidth=None):
     path = './datasets/pendigits'
     file = join(path, 'pendigits.tra')
     file_test = join(path, 'pendigits.tes')
@@ -152,9 +174,10 @@ def get_pendigits():
         path=path,
         train_file=file,
         test_file=file_test,
+        bandwidth=bandwidth,
     )
 
-def get_satimage():
+def get_satimage(bandwidth=None):
     path = './datasets/satimage'
     file = join(path, 'sat.trn')
     file_test = join(path, 'sat.tst')
@@ -169,9 +192,10 @@ def get_satimage():
         path=path,
         train_file=file,
         test_file=file_test,
+        bandwidth=bandwidth,
     )
 
-def get_banknote():
+def get_banknote(bandwidth=None):
     path = './datasets/banknote'
     file = join(path, 'data_banknote_authentication.txt')
     return Dataset(
@@ -179,10 +203,11 @@ def get_banknote():
         load_x(file, ',', lambda row: row[:-1]),
         load_y(file, ',', lambda row: row[-1]),
         path=path,
-        train_file=file
+        train_file=file,
+        bandwidth=bandwidth,
     )
 
-def get_eeg():
+def get_eeg(bandwidth=None):
     path = './datasets/eeg'
     file = join(path, 'EEG Eye State.arff')
     return Dataset(
@@ -190,10 +215,11 @@ def get_eeg():
         load_x(file, ',', lambda row: row[:-1]),
         load_y(file, ',', lambda row: row[-1]),
         path=path,
-        train_file=file
+        train_file=file,
+        bandwidth=bandwidth,
     )
 
-def get_magic():
+def get_magic(bandwidth=None):
     path = './datasets/magic'
     file = join(path, 'magic04.data')
     return Dataset(
@@ -201,10 +227,11 @@ def get_magic():
         load_x(file, ',', lambda row: row[:-1]),
         load_y(file, ',', lambda row: row[-1]),
         path=path,
-        train_file=file
+        train_file=file,
+        bandwidth=bandwidth,
     )
 
-def get_spam():
+def get_spam(bandwidth=None):
     path = './datasets/spam'
     file = join(path, 'spambase.data')
     return Dataset(
@@ -212,10 +239,11 @@ def get_spam():
         load_x(file, ',', lambda row: row[:-1]),
         load_y(file, ',', lambda row: row[-1]),
         path=path,
-        train_file=file
+        train_file=file,
+        bandwidth=bandwidth,
     )
 
-def get_auslan(id=1):
+def get_auslan(id=1, bandwidth=None):
     path = './datasets/auslan'
     file = join(path, 'tctodd/tctodd' + str(id) + '.txt')
     return Dataset(
@@ -224,9 +252,10 @@ def get_auslan(id=1):
         load_y(file, ' ', lambda row: row[-1]),
         path=path,
         train_file=file,
+        bandwidth=bandwidth,
     )
 
-def get_drd():
+def get_drd(bandwidth=None):
     path = './datasets/drd'
     file = join(path, 'messidor_features.arff')
     return Dataset(
@@ -235,9 +264,10 @@ def get_drd():
         load_y(file, ',', lambda row: row[-1]),
         path=path,
         train_file=file,
+        bandwidth=bandwidth,
     )
 
-def get_imagesegment():
+def get_imagesegment(bandwidth=None):
     path = './datasets/imagesegment'
     file = join(path, 'segmentation.data')
     file_test = join(path, 'segmentation.test')
@@ -250,9 +280,10 @@ def get_imagesegment():
         path=path,
         train_file=file,
         test_file=file_test,
+        bandwidth=bandwidth,
     )
 
-def get_pageblock():
+def get_pageblock(bandwidth=None):
     path = './datasets/pageblock'
     file = join(path, 'page-blocks.data')
     return Dataset(
@@ -261,9 +292,10 @@ def get_pageblock():
         load_y(file, ' ', lambda row: row[-1]),
         path=path,
         train_file=file,
+        bandwidth=bandwidth,
     )
 
-def get_statlogsegment():
+def get_statlogsegment(bandwidth=None):
     path = './datasets/statlogsegment'
     file = join(path, 'segment.dat')
     return Dataset(
@@ -272,9 +304,10 @@ def get_statlogsegment():
         load_y(file, ' ', lambda row: row[-1]),
         path=path,
         train_file=file,
+        bandwidth=bandwidth,
     )
 
-def get_winequality(type='white'):
+def get_winequality(type='white', bandwidth=None):
     path = './datasets/winequality'
     file = {
         'white': join(path, 'winequality-white.csv'),
@@ -285,137 +318,154 @@ def get_winequality(type='white'):
         load_x(file[type], ';', lambda row: row[:-1]),
         load_y(file[type], ';', lambda row: row[-1]),
         path=path,
-        train_file=file[type]
+        train_file=file[type],
+        bandwidth=bandwidth,
     )
 
-def get_iris_with_test():
+'''
+datasets that have been splitted into .train and .test
+'''
+
+def get_iris_with_test(bandwidth=None):
     file = './datasets/iris/iris.train'
     file_test = './datasets/iris/iris.test'
     return Dataset(
-            'iris',
+            'iris_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )
 
-def get_yeast_with_test():
+def get_yeast_with_test(bandwidth=None):
     file = './datasets/yeast/yeast.train'
     file_test = './datasets/yeast/yeast.test'
     return Dataset(
-            'yeast',
+            'yeast_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )
 
-def get_letter_with_test():
+def get_letter_with_test(bandwidth=None):
     file = './datasets/letter/letter.train'
     file_test = './datasets/letter/letter.test'
     return Dataset(
-            'letter',
+            'letter_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )
 
-def get_banknote_with_test():
+def get_banknote_with_test(bandwidth=None):
     file = './datasets/banknote/banknote.train'
     file_test = './datasets/banknote/banknote.test'
     return Dataset(
-            'banknote',
+            'banknote_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )
 
-def get_eeg_with_test():
+def get_eeg_with_test(bandwidth=None):
     file = './datasets/eeg/eeg.train'
     file_test = './datasets/eeg/eeg.test'
     return Dataset(
-            'eeg',
+            'eeg_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )
 
-def get_magic_with_test():
+def get_magic_with_test(bandwidth=None):
     file = './datasets/magic/magic.train'
     file_test = './datasets/magic/magic.test'
     return Dataset(
-            'magic',
+            'magic_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )
 
-def get_spam_with_test():
+def get_spam_with_test(bandwidth=None):
     file = './datasets/spam/spam.train'
     file_test = './datasets/spam/spam.test'
     return Dataset(
-            'spam',
+            'spam_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )
 
-def get_auslan_with_test():
+def get_auslan_with_test(bandwidth=None):
     file = './datasets/auslan/auslan.train'
     file_test = './datasets/auslan/auslan.test'
     return Dataset(
-            'auslan',
+            'auslan_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )
 
-def get_drd_with_test():
+def get_drd_with_test(bandwidth=None):
     file = './datasets/drd/drd.train'
     file_test = './datasets/drd/drd.test'
     return Dataset(
-            'drd',
+            'drd_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )
 
-def get_pageblock_with_test():
+def get_pageblock_with_test(bandwidth=None):
     file = './datasets/pageblock/pageblock.train'
     file_test = './datasets/pageblock/pageblock.test'
     return Dataset(
-            'pageblock',
+            'pageblock_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )
 
-def get_statlogsegment_with_test():
+def get_statlogsegment_with_test(bandwidth=None):
     file = './datasets/statlogsegment/statlogsegment.train'
     file_test = './datasets/statlogsegment/statlogsegment.test'
     return Dataset(
-            'statlogsegment',
+            'statlogsegment_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )
 
-def get_winequality_with_test(type='white'):
+def get_winequality_with_test(type='white', bandwidth=None):
     file = './datasets/winequality/winequality_' + type + '.train'
     file_test = './datasets/winequality/winequality_' + type + '.test'
     return Dataset(
-            'winequality_' + type,
+            'winequality_' + type + '_with_test',
             load_x(file),
             load_y(file),
             load_x(file_test),
-            load_y(file_test)
+            load_y(file_test),
+            bandwidth=bandwidth,
     )

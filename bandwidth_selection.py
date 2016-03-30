@@ -7,7 +7,9 @@ class BandwidthSelection:
 
     @staticmethod
     def gaussian_distribution(X):
+        X = np.array(X)
         n = len(X)
+        d = len(X[0])
 
         def sq_dist(x, y):
             diff = x - y
@@ -18,12 +20,14 @@ class BandwidthSelection:
             variance =  1 / n * sum(sq_dist(x, mean) for x in X)
             return variance ** 0.5
 
-        return 1.06 * sd(X) * (n ** (-1 / 5))
+        bw = 1.06 * sd(X) * (n ** (-1 / 5))
+        return bw
 
     @staticmethod
     def cv_maximum_likelihood(X,
                               folds=10,
-                              search=np.linspace(1e-4, 1.0, 1000)):
+                              search=np.linspace(1e-4, 1.0, 300)):
+        X = np.array(X)
         # tends to give an undersmooth bandwidth
         # exhaustive search
         params = {

@@ -52,15 +52,6 @@ class KmeansMocking:
     def prepare(self, X):
         self.kmeans.fit(X)
 
-    def sigmoid(self, x):
-        # sigmoid rebased
-        # sigmoid(0) = 0
-        # sigmoid(sigmoid_x_is_one) ~= 1
-        return 2 / (1 + math.exp(-x)) - 1
-
-    def scale(self, x, weight):
-        return self.sigmoid_x_is_one / weight * x
-
     def score(self, group):
         assert isinstance(group, Group)
 
@@ -69,15 +60,7 @@ class KmeansMocking:
             return 0
 
         major_label, major_cnt = group.major()
-        scaling_factor = self.sigmoid(
-            self.scale(seeding_cnt, group.cnt)
-        )
-        # this will make this algorithm more discrete,
-        # works better for pendigits
         scaling_factor = 1
-
-        # if seeding_cnt == 1:
-        #     print('scaling:', scaling_factor, 'seeding_cnt:', seeding_cnt, '/', group.cnt)
 
         score = major_cnt / seeding_cnt * group.cnt * scaling_factor
         return score
@@ -92,13 +75,7 @@ class KmeansMocking:
     def badness(self):
         return 1 - self.goodness()
 
-    def run(self, seeding_y, sigmoid_x_is_one=1e-9):
-        # sigmoid(x) must be as close as 'precision' to 1 to be considered as 1
-        # this the better the precision, the steeper the curve
-        # that means it requires less points to gain high score in a given area (voronoid)
-        sigmoid_x_is_one = math.log(int(2 * (1 / sigmoid_x_is_one)) - 1)
-        self.sigmoid_x_is_one = sigmoid_x_is_one
-
+    def run(self, seeding_y):
         self.groups = [Group(i) for i in range(self.clusters_cnt)]
 
         for x, group, label in zip(self.X, self.grouping_result(), seeding_y):

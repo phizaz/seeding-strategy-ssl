@@ -97,7 +97,7 @@ class AgglomerativeClusteringMaxMergeDist:
         centroids, cluster_member_cnt = self.get_centroids(X, belong_to_renamed)
         self.cluster_centers_ = centroids
 
-        print('centroids:', centroids)
-        print('cluster_member_cnt:', cluster_member_cnt)
+        # print('centroids:', centroids)
+        # print('cluster_member_cnt:', cluster_member_cnt)
 
         return centroids, cluster_member_cnt

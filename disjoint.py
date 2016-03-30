@@ -9,14 +9,19 @@ class DisjointSet:
         return self.level_parent[node]
 
     def join(self, a, b):
-        a = self.parent(a)
-        b = self.parent(b)
+        parent_a = self.parent(a)
+        parent_b = self.parent(b)
 
         if a == b:
             raise Exception('joining the same set')
 
-        self.level_parent[a] = self.highest
-        self.level_parent[b] = self.highest
+        self.level_parent[parent_a] = self.highest
+        self.level_parent[parent_b] = self.highest
+
+        # prevent trees to be tall
+        self.parent(a)
+        self.parent(b)
+
         self.highest += 1
 
     def common(self, a, b):

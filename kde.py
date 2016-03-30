@@ -47,22 +47,22 @@ def create_gradienter(X, bandwidth=.2):
 
     return gradient
 
-def get_bandwidth(X, mode='cv'):
-    def cv_bandwidth(X):
-        # exhaustive search
-        params = {
-            'bandwidth': np.linspace(1e-4, 1.0, 1000)
-        }
-        grid = GridSearchCV(
-                KernelDensity(rtol=1e-6),
-                params,
-                cv=10,
-                n_jobs=-1)
-        grid.fit(X)
-        print('best_params:', grid.best_params_)
-        return grid.best_params_['bandwidth']
-
-    return cv_bandwidth(X)
+# def get_bandwidth(X, mode='cv'):
+#     def cv_bandwidth(X):
+#         # exhaustive search
+#         params = {
+#             'bandwidth': np.linspace(1e-4, 1.0, 1000)
+#         }
+#         grid = GridSearchCV(
+#                 KernelDensity(rtol=1e-6),
+#                 params,
+#                 cv=10,
+#                 n_jobs=-1)
+#         grid.fit(X)
+#         print('best_params:', grid.best_params_)
+#         return grid.best_params_['bandwidth']
+#
+#     return cv_bandwidth(X)
 
 def create_hill_climber(X, bandwidth, fast=True, ret_histroy=False):
     density = create_density_fn(X, bandwidth, 'scikit')
@@ -120,7 +120,8 @@ def create_hill_climber(X, bandwidth, fast=True, ret_histroy=False):
             # using kdtree to calculate the effect of far away points
             # and points in the same region (small) to have
             # the same averaged kernel weight
-            fast_climb = create_fast_climb_kdtree(X, kernel, approx)
+            raise Exception('not in service')
+            # fast_climb = create_fast_climb_kdtree(X, kernel, approx)
         else:
             def fast_climb(x):
                 # denclue 2.0 paper
@@ -159,7 +160,7 @@ def create_hill_climber(X, bandwidth, fast=True, ret_histroy=False):
                 # this is quite controversial
                 break
 
-        print('call_cnt:', call_cnt, 'summit:', current)
+        # print('call_cnt:', call_cnt, 'summit:', current)
 
         if ret_histroy:
             return current, history

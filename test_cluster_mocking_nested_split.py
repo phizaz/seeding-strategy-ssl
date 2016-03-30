@@ -5,7 +5,7 @@ from badness import *
 from ssltools import *
 from sklearn.cluster import KMeans
 
-dataset = get_yeast()
+dataset = get_yeast().rescale()
 
 
 def seed_randomly(prob):

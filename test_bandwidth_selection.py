@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-dataset = get_pendigits()
+dataset = get_pendigits().rescale()
 
 # X = dataset.X
 pca = PCA(2)
