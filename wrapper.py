@@ -379,10 +379,11 @@ def badness_majority_voronoid(prepare=False):
 
     def fn(inst):
         x, y_seed = requires(['x', 'y_seed'], inst)
+        sigmoid = requires('voronoid_sigmoid', inst)
         badness_engine = requires('majority_voronoid_engine',
                                   inst)
         return inst.set('badness_majority_voronoid',
-                        badness_engine.run(y_seed))
+                        badness_engine.run(y_seed, sigmoid))
 
     modes = {
         True: prepare_fn,
@@ -482,13 +483,13 @@ def goodness_cluster_mocking():
 
     return fn
 
-def goodness_cluster_mocking_nested_ratio():
+def goodness_cluster_mocking_nested_ratio(method='ward'):
 
     def fn(inst):
         x, labels = requires(['x', 'cluster_labels'], inst)
         y_seed = requires('y_seed', inst)
-        badness_engine = ClusterMockingNestedRatio(x, labels)
-        return inst.set('goodness_cluster_mocking_nested_ratio',
+        badness_engine = ClusterMockingNestedRatio(x, labels, method)
+        return inst.set('goodness_cluster_mocking_nested_ratio_' + method,
                         badness_engine.run(y_seed))
 
     return fn

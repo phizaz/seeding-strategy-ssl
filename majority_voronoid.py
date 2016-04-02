@@ -53,15 +53,17 @@ class DisjointSet:
 
     @staticmethod
     def sigmoid(x):
+        # sigmoid rebased
+        # sigmoid(0) = 0
+        # sigmoid(sigmoid_x_is_one) ~= 1
         return 2 / (1 + math.exp(-x)) - 1
 
     @staticmethod
-    def scale(x, range):
-        s = math.log(1999999999)
-        return s / range * x
+    def scale(x, weight, sigmoid_x_is_one):
+        return sigmoid_x_is_one / weight * x
 
     @staticmethod
-    def node_goodness(node):
+    def node_goodness(node, sigmoid_x_is_one):
         # maximum goodness is node.cnt
         assert isinstance(node, Node)
 
@@ -73,26 +75,26 @@ class DisjointSet:
         # print('major_label:', major_label)
         # print('major_cnt:', major_cnt, 'seeding:', seeding_cnt, '/', node.cnt)
         scaling_factor = DisjointSet.sigmoid(
-                DisjointSet.scale(seeding_cnt, node.cnt))
+                DisjointSet.scale(seeding_cnt, node.cnt, sigmoid_x_is_one))
         # scaling_factor = 1
 
         score = major_cnt / seeding_cnt * node.cnt * scaling_factor
         # print('score:', score, '/', node.cnt)
         return score
 
-    def goodness(self):
+    def goodness(self, sigmoid_x_is_one):
         sum_goodness = 0
         for node in self.nodes:
             if not node.is_root():
                 continue
 
-            sum_goodness += DisjointSet.node_goodness(node)
+            sum_goodness += DisjointSet.node_goodness(node, sigmoid_x_is_one)
 
         return sum_goodness / self.cnt
 
 
-    def badness(self):
-        bad = 1 - self.goodness()
+    def badness(self, sigmoid_x_is_one):
+        bad = 1 - self.goodness(sigmoid_x_is_one)
         # print('badness:', bad)
         return bad
 
@@ -105,7 +107,14 @@ class MajorityVoronoid:
         merge_hist = linkage(X, method='ward', metric='euclidean', preserve_input=True)
         return merge_hist
 
-    def run(self, seeding_y):
+    def run(self, seeding_y, sigmoid_x_is_one):
+        # sigmoid(x) must be as close as 'precision' to 1 to be considered as 1
+        # this the better the precision, the steeper the curve
+        # that means it requires less points to gain high score in a given area (voronoid)
+        sigmoid_x_is_one = math.log(int(2 * (1 / sigmoid_x_is_one)) - 1)
+        # print('sigmoid_x_is_one:', sigmoid_x_is_one)
+        self.sigmoid_x_is_one = sigmoid_x_is_one
+
         disjoint_set = DisjointSet(len(self.X))
 
         # set seeding
@@ -114,7 +123,7 @@ class MajorityVoronoid:
                 continue
             disjoint_set.nodes[i].set_seed(label)
 
-        best_badness = disjoint_set.badness()
+        best_badness = disjoint_set.badness(sigmoid_x_is_one)
 
         # merge nodes to create a tree
         # step by step
@@ -122,7 +131,8 @@ class MajorityVoronoid:
             clusters_cnt = len(self.X) - i - 1
             a, b = int(a), int(b)
             disjoint_set.join(a, b)
-            best_badness = min(disjoint_set.badness(),
+            best_badness = min(disjoint_set.badness(sigmoid_x_is_one),
                                best_badness)
 
         return best_badness
+

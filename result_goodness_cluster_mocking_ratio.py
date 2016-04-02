@@ -9,7 +9,7 @@ from cache import StorageCache
 
 '''
 generate results for
-cluster mocking on many linkages
+cluster mocking ratio on many linkages
 '''
 
 datasets = [
@@ -126,15 +126,17 @@ def run_and_save(dataset):
             .x_test(dataset.X_test) \
             .y_test(dataset.Y_test) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
-                .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'kmeans_3')) \
-                .pipe(goodness_cluster_mocking()) \
-                .pipe(goodness_cluster_mocking_nested_ratio(method='complete')) \
-                .pipe(goodness_cluster_mocking_nested_split(method='ward')) \
+            .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'kmeans_3')) \
+            .pipe(goodness_cluster_mocking_nested_ratio(method='ward')) \
+            .pipe(goodness_cluster_mocking_nested_ratio(method='average')) \
+            .pipe(goodness_cluster_mocking_nested_ratio(method='complete')) \
+            .pipe(goodness_cluster_mocking_nested_ratio(method='single')) \
             .merge('result', group('evaluation_kmeans_3',
                                    'label_correctness_kmeans_3',
-                                   'goodness_cluster_mocking',
+                                   'goodness_cluster_mocking_nested_ratio_ward',
+                                   'goodness_cluster_mocking_nested_ratio_average',
                                    'goodness_cluster_mocking_nested_ratio_complete',
-                                   'goodness_cluster_mocking_nested_split_ward',
+                                   'goodness_cluster_mocking_nested_ratio_single',
                                    'name')) \
             .connect(stop())
 
@@ -145,7 +147,7 @@ def run_and_save(dataset):
 
     result = fn()
 
-    with open('results/goodness_cluster_mocking-' + dataset.name + '.json', 'w') as file:
+    with open('results/goodness_cluster_mocking_ratio-' + dataset.name + '.json', 'w') as file:
         json.dump(result['result'], file)
 
 # with ProcessPoolExecutor() as executor:

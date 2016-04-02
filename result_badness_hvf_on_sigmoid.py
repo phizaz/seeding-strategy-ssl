@@ -7,17 +7,27 @@ from wrapper import *
 import numpy as np
 from cache import StorageCache
 
+'''
+generate results for hierarchical voronoid filling on different sigmoids
+'''
+
 datasets = [
-    get_iris(),
-    # get_pendigits(),
-    # get_yeast(),
-    # get_satimage(),
-    # get_banknote(),
-    # get_eeg(), # is not suitable for SSL
-    # get_spam(), # prone to imbalanced problem
-    # get_letter(), # large dataset
-    # get_magic(), # super slow for kde hill climbing
+    get_iris_with_test().rescale(),
+    get_pendigits().rescale(),
+    get_yeast_with_test().rescale(),
+    get_satimage().rescale(),
+    get_banknote_with_test().rescale(),
+    get_spam_with_test().rescale(),
+    get_drd_with_test().rescale(),
+    get_imagesegment().rescale(),
+    get_pageblock_with_test().rescale(),
+    get_statlogsegment_with_test().rescale(),
+    get_winequality_with_test('white').rescale(),
+    get_winequality_with_test('red').rescale(),
 ]
+
+datasets.sort(key=lambda dataset: len(dataset.X))
+print('datasets:', ', '.join(list(map(lambda dataset: dataset.name, datasets))))
 
 def kmeans_ssl(clusters, neighbors, field):
     def fn(pipe):
@@ -85,7 +95,7 @@ def seeder(seeding_fns, seeding_names, name):
 def create_voronoid_sigmoid():
     params = []
     names = []
-    space = np.logspace(-1, -20, 20)
+    space = np.logspace(-1, -18, 7, base=math.exp(1))
 
     for c in space:
         params.append(c)
@@ -125,45 +135,16 @@ def run_and_save(dataset):
             .pipe(badness_naive(prepare=True)) \
             .pipe(badness_hierarchical_voronoid_filling(prepare=True)) \
             .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
-            .pipe(badness_naive()) \
-            .pipe(let('voronoid_c', 0.01)) \
-            .split(len(voronoid_sigmoids), voronoid_sigmoid(voronoid_sigmoids, voronoid_sigmoid_names)) \
-            .pipe(badness_hierarchical_voronoid_filling()) \
-            .merge(['badness_hierarchical_voronoid_filling',
-                    'voronoid_sigmoid'],
-                   flat_group('badness_hierarchical_voronoid_filling'),
-                   flat_group('voronoid_sigmoid')) \
-            .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
-            .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
-            .merge('result', group('evaluation_kmeans_1',
-                                   'evaluation_kmeans_3',
-                                   'badness_hierarchical_voronoid_filling',
-                                   'badness_naive',
-                                   'voronoid_sigmoid',
-                                   'name')) \
-            .connect(stop())
-
-    def cv():
-        return Pipe() \
-            .x(dataset.X) \
-            .y(dataset.Y) \
-            .pipe(badness_naive(prepare=True)) \
-            .pipe(badness_hierarchical_voronoid_filling(prepare=True)) \
-            .split(len(seeding_fns), seeder(seeding_fns, seeding_names, name=dataset.name)) \
-            .pipe(badness_naive()) \
-            .pipe(let('voronoid_c', 0.01)) \
-            .split(len(voronoid_sigmoids), voronoid_sigmoid(voronoid_sigmoids, voronoid_sigmoid_names)) \
-            .pipe(badness_hierarchical_voronoid_filling()) \
-            .merge(['badness_hierarchical_voronoid_filling',
-                    'voronoid_sigmoid'],
-                   flat_group('badness_hierarchical_voronoid_filling'),
-                   flat_group('voronoid_sigmoid')) \
-            .split(10, cross('y_seed')) \
-            .connect(kmeans_ssl(dataset.cluster_cnt, dataset.K_for_KNN, 'evaluation_kmeans_1')) \
-            .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
-            .merge(['evaluation_kmeans_1', 'evaluation_kmeans_3'], total('evaluation_kmeans_1'), total('evaluation_kmeans_3')) \
-            .merge('result', group('evaluation_kmeans_1',
-                                   'evaluation_kmeans_3',
+                .pipe(badness_naive()) \
+                .pipe(let('voronoid_c', 0.01)) \
+                .split(len(voronoid_sigmoids), voronoid_sigmoid(voronoid_sigmoids, voronoid_sigmoid_names)) \
+                    .pipe(badness_hierarchical_voronoid_filling()) \
+                .merge(['badness_hierarchical_voronoid_filling',
+                        'voronoid_sigmoid'],
+                       flat_group('badness_hierarchical_voronoid_filling'),
+                       flat_group('voronoid_sigmoid')) \
+                .connect(kmeans_ssl(dataset.cluster_cnt * 3, dataset.K_for_KNN, 'evaluation_kmeans_3')) \
+            .merge('result', group('evaluation_kmeans_3',
                                    'badness_hierarchical_voronoid_filling',
                                    'badness_naive',
                                    'voronoid_sigmoid',
@@ -173,12 +154,11 @@ def run_and_save(dataset):
     if dataset.has_testdata():
         fn = normal
     else:
-        fn = cv
+        raise Exception('no cv')
 
     result = fn()
-    # result = fn(dataset, [0.2])
 
-    with open('results/badness_on_many_seeding-' + dataset.name + '.json', 'w') as file:
+    with open('results/badness_hvf_on_sigmoid-' + dataset.name + '.json', 'w') as file:
         json.dump(result['result'], file)
 
 # with ProcessPoolExecutor() as executor:

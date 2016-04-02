@@ -35,8 +35,8 @@ class Group:
         # returns label, cnt
         return self.seeding_counter.most_common(1).pop()
 
-    def cluster(self):
-        l_method = agglomerative_l_method(self.X)
+    def cluster(self, method='ward'):
+        l_method = agglomerative_l_method(self.X, method=method)
         self.sub_clusters_cnt = len(l_method.cluster_centers_)
         # print('sub_clusters_cnt:', self.sub_clusters_cnt, 'cnt:', self.cnt)
 
@@ -44,11 +44,12 @@ class Group:
         self.clustering_model.fit(self.X, l_method.labels_)
 
 class ClusterMockingNestedRatio:
-    def __init__(self, X, labels):
+    def __init__(self, X, labels, method):
         self.clusters_cnt = max(labels) + 1
         self.X = X
         self.labels = labels
         self.groups = []
+        self.method = method
 
     def grouping_result(self):
         return self.labels
@@ -63,7 +64,7 @@ class ClusterMockingNestedRatio:
             return 0, 0
 
         # cluster the sub-clusters
-        group.cluster()
+        group.cluster(method=self.method)
 
         count_by_label = Counter(group.clustering_model.predict_nn(group.X))
 

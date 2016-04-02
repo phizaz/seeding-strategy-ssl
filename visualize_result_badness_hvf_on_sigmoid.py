@@ -23,9 +23,11 @@ datasets = [
 
 fig, axes = plt.subplots(3, 4)
 
+avgs = [0 for i in range(7)]
+
 for ax, dataset in zip(axes.flatten(), datasets):
 
-    with open('results/badness_on_many_seeding_weighted-' + dataset + '.json') as file:
+    with open('results/badness_hvf_on_sigmoid-' + dataset + '.json') as file:
         result = json.load(file)
 
     def plot(ax, sort_fn, name=''):
@@ -33,14 +35,15 @@ for ax, dataset in zip(axes.flatten(), datasets):
         data = {
             'acc_kmeans_3':
                 list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_3'])),
-            'badness_l_method':
-                list(map(lambda x: x['md'], result['badness_l_method_weighted'])),
-            'badness_denclue':
-                list(map(lambda x: x['md'], result['badness_denclue_weighted'])),
             'badness_naive':
                 list(map(lambda x: x['md'], result['badness_naive'])),
+            'badness_hierarchical_voronoid_filling': result['badness_hierarchical_voronoid_filling'],
+            'voronoid_sigmoid': result['voronoid_sigmoid'],
             'names': result['name'],
         }
+
+        # sigmoids are same for all rows
+        sigmoids = data['voronoid_sigmoid'][0]
 
         # transpose the dictionary
         keys = data.keys()
@@ -64,21 +67,26 @@ for ax, dataset in zip(axes.flatten(), datasets):
         x = range(cnt)
 
         col = sorted_data
-        # plot results
         ax.plot(x, col['acc_kmeans_3'], 'k--', color="black", label='acc c*3')
-        ax.plot(x, col['badness_l_method'], 'k', color="red", label='l')
-        ax.plot(x, col['badness_denclue'], 'k', color="blue", label='kde')
         ax.plot(x, col['badness_naive'], 'k', color='grey', label='naive')
 
+        hvf = result['badness_hierarchical_voronoid_filling']
+        hvf_by_sigmoid = [[] for i in range(len(sigmoids))]
+        for each in hvf:
+            for i, s in enumerate(each):
+                hvf_by_sigmoid[i].append(s)
+
+        cmap = get_cmap(len(sigmoids) + 1)
+
         print('dataset:', dataset)
-        a = decreasing_penalty(col['badness_l_method'])
-        b = decreasing_penalty(col['badness_denclue'])
-        c = decreasing_penalty(col['badness_naive'])
-        print('score (l_method):', a)
-        print('score (denclue):', b)
-        print('score (naive):', c)
-        mean = (a + b + c) / 3
-        print('score (avg):', mean)
+        for i, (sigmoid, each_hvf) in enumerate(zip(sigmoids, hvf_by_sigmoid)):
+            ax.plot(x, each_hvf, 'k', color=cmap(i), label=sigmoid)
+            penalty = decreasing_penalty(each_hvf)
+            if i == 2:
+                # the best now
+                print('penalty:', penalty)
+            avgs[i] += penalty
+
 
         # remove y axis
         ax.yaxis.set_major_formatter(plt.NullFormatter())
@@ -117,7 +125,12 @@ for ax, dataset in zip(axes.flatten(), datasets):
         # for label in legend.get_lines():
         #     label.set_linewidth(1)  # the legend line width
 
+
     plot(ax, lambda x: x['acc_kmeans_3'], 'sort by kmeans 3')
+
+for i in range(len(avgs)):
+    avgs[i] /= len(datasets)
+    print('penalty (' + str(i) + '):', avgs[i])
 
 plt.subplots_adjust(bottom=0.1)
 

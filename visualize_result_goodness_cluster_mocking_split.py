@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
 import json
+from util import *
 from util import get_cmap
 
 datasets = [
@@ -21,6 +22,9 @@ datasets = [
 ]
 
 fig, axes = plt.subplots(3, 4)
+
+types = ['single', 'complete', 'average', 'ward']
+avgs = {}
 
 for ax, dataset in zip(axes.flatten(), datasets):
 
@@ -70,6 +74,16 @@ for ax, dataset in zip(axes.flatten(), datasets):
         ax.plot(x, col['goodness_cluster_mocking_nested_split_complete'], 'k', color='yellow', label='kmn')
         ax.plot(x, col['goodness_cluster_mocking_nested_split_single'], 'k', color='magenta', label='kmn')
 
+        print('dataset:', dataset)
+        for type in types:
+            acc = col['label_correctness_kmeans_3']
+            L, H = list(zip(*col['goodness_cluster_mocking_nested_split_' + type]))
+            penalty = joint_goodness_penalty(acc, L, H)
+            print('penalty (' + type + '):', penalty)
+            if type not in avgs:
+                avgs[type] = 0
+            avgs[type] += penalty
+
         # remove y axis
         ax.yaxis.set_major_formatter(plt.NullFormatter())
 
@@ -109,6 +123,10 @@ for ax, dataset in zip(axes.flatten(), datasets):
 
     # plot(axes[0], lambda x: x['acc_kmeans_1'], 'sort by kmeans 1')
     plot(ax, lambda x: x['acc_kmeans_3'], 'sort by kmeans 3')
+
+for type in types:
+    avgs[type] /= len(datasets)
+    print('avg penalty (' + type + '):', avgs[type])
 
 plt.subplots_adjust(bottom=0.1)
 plt.show()

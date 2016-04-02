@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
+from util import *
 import json
 from util import get_cmap
 
@@ -67,6 +68,16 @@ for ax, dataset in zip(axes.flatten(), datasets):
         ax.plot(x, col['badness_l_method'], 'k', color="red", label='l')
         ax.plot(x, col['badness_denclue'], 'k', color="blue", label='kde')
         ax.plot(x, col['badness_naive'], 'k', color='grey', label='naive')
+
+        print('dataset:', dataset)
+        a = decreasing_penalty(col['badness_l_method'])
+        b = decreasing_penalty(col['badness_denclue'])
+        c = decreasing_penalty(col['badness_naive'])
+        print('score (l_method):', a)
+        print('score (denclue):', b)
+        print('score (naive):', c)
+        mean = (a + b + c) / 3
+        print('score (avg):', mean)
 
         # remove y axis
         ax.yaxis.set_major_formatter(plt.NullFormatter())

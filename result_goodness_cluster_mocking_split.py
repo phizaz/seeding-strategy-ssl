@@ -9,7 +9,7 @@ from cache import StorageCache
 
 '''
 generate results for
-cluster mocking on many linkages
+cluster mocking split on many linkages
 '''
 
 datasets = [

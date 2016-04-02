@@ -23,9 +23,12 @@ datasets = [
 
 fig, axes = plt.subplots(3, 4)
 
+types = ['single', 'complete', 'average', 'ward']
+avgs = {}
+
 for ax, dataset in zip(axes.flatten(), datasets):
 
-    with open('results/badness_on_many_seeding_weighted-' + dataset + '.json') as file:
+    with open('results/goodness_cluster_mocking_ratio-' + dataset + '.json') as file:
         result = json.load(file)
 
     def plot(ax, sort_fn, name=''):
@@ -33,12 +36,12 @@ for ax, dataset in zip(axes.flatten(), datasets):
         data = {
             'acc_kmeans_3':
                 list(map(lambda x: x[0] / x[1], result['evaluation_kmeans_3'])),
-            'badness_l_method':
-                list(map(lambda x: x['md'], result['badness_l_method_weighted'])),
-            'badness_denclue':
-                list(map(lambda x: x['md'], result['badness_denclue_weighted'])),
-            'badness_naive':
-                list(map(lambda x: x['md'], result['badness_naive'])),
+            'label_correctness_kmeans_3':
+                list(map(lambda x: x[0] / x[1], result['label_correctness_kmeans_3'])),
+            'goodness_cluster_mocking_nested_ratio_ward': result['goodness_cluster_mocking_nested_ratio_ward'],
+            'goodness_cluster_mocking_nested_ratio_average': result['goodness_cluster_mocking_nested_ratio_average'],
+            'goodness_cluster_mocking_nested_ratio_complete': result['goodness_cluster_mocking_nested_ratio_complete'],
+            'goodness_cluster_mocking_nested_ratio_single': result['goodness_cluster_mocking_nested_ratio_single'],
             'names': result['name'],
         }
 
@@ -64,21 +67,22 @@ for ax, dataset in zip(axes.flatten(), datasets):
         x = range(cnt)
 
         col = sorted_data
-        # plot results
         ax.plot(x, col['acc_kmeans_3'], 'k--', color="black", label='acc c*3')
-        ax.plot(x, col['badness_l_method'], 'k', color="red", label='l')
-        ax.plot(x, col['badness_denclue'], 'k', color="blue", label='kde')
-        ax.plot(x, col['badness_naive'], 'k', color='grey', label='naive')
+        ax.plot(x, col['label_correctness_kmeans_3'], 'k--', color="grey", label='label c*3')
+        ax.plot(x, col['goodness_cluster_mocking_nested_ratio_ward'], 'k', color='red', label='kmn')
+        ax.plot(x, col['goodness_cluster_mocking_nested_ratio_average'], 'k', color='orange', label='kmn')
+        ax.plot(x, col['goodness_cluster_mocking_nested_ratio_complete'], 'k', color='yellow', label='kmn')
+        ax.plot(x, col['goodness_cluster_mocking_nested_ratio_single'], 'k', color='magenta', label='kmn')
 
         print('dataset:', dataset)
-        a = decreasing_penalty(col['badness_l_method'])
-        b = decreasing_penalty(col['badness_denclue'])
-        c = decreasing_penalty(col['badness_naive'])
-        print('score (l_method):', a)
-        print('score (denclue):', b)
-        print('score (naive):', c)
-        mean = (a + b + c) / 3
-        print('score (avg):', mean)
+        for type in types:
+            acc = col['label_correctness_kmeans_3']
+            L, H = list(zip(*col['goodness_cluster_mocking_nested_ratio_' + type]))
+            penalty = joint_goodness_penalty(acc, L, H)
+            print('penalty (' + type + '):', penalty)
+            if type not in avgs:
+                avgs[type] = 0
+            avgs[type] += penalty
 
         # remove y axis
         ax.yaxis.set_major_formatter(plt.NullFormatter())
@@ -117,8 +121,12 @@ for ax, dataset in zip(axes.flatten(), datasets):
         # for label in legend.get_lines():
         #     label.set_linewidth(1)  # the legend line width
 
+    # plot(axes[0], lambda x: x['acc_kmeans_1'], 'sort by kmeans 1')
     plot(ax, lambda x: x['acc_kmeans_3'], 'sort by kmeans 3')
 
-plt.subplots_adjust(bottom=0.1)
+for type in types:
+    avgs[type] /= len(datasets)
+    print('avg penalty (' + type + '):', avgs[type])
 
+plt.subplots_adjust(bottom=0.1)
 plt.show()

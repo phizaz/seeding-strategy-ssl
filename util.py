@@ -218,3 +218,43 @@ def get_cmap(N):
         return 'rgb'[index]
 
     return map_index_to_rgb_color
+
+def decreasing_penalty(l):
+    score = 0
+    for i in range(1, len(l)):
+        score += max(0, l[i] - l[i-1])
+
+    return score / (max(l) - min(l))
+
+def goodness_penalty(X, L, H):
+    raise Exception('not in use anymore')
+    score = 0
+    for x, l, h in zip(X, L, H):
+        score += abs(x - l) + abs(x - h)
+    scaled = score / (2 * len(X))
+    return scaled
+
+def width_penalty(L, H):
+    score = 0
+    for l, h, in zip(L, H):
+        score += h - l
+    scaled = score / len(L)
+    return scaled
+
+def outrange_rate(X, L, H):
+    score = 0
+    for x, l, h in zip(X, L, H):
+        if x < l or h < x:
+            score += 1
+    return score / len(X)
+
+def joint_goodness_penalty(X, L, H, C=0.5):
+    width = width_penalty(L, H)
+    outrange = outrange_rate(X, L, H)
+    #print('width:', width)
+    #print('outrange:', outrange)
+    return C * width + (1 - C) * outrange
+
+def average_width(L, H):
+    s = sum(h - l for h, l in zip(H, L))
+    return s / len(L)
