@@ -132,4 +132,94 @@ class Test_good_K_for_KNN_with_testdata(TestCase):
         self.assertIsInstance(goodK, int)
         self.assertIsInstance(acc, float)
 
-class
+class Test_requires(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.data = {
+            'a': 10,
+            'b': 20,
+        }
+
+    def test_require_one(self):
+        a = requires('a', self.data)
+        self.assertEqual(a, 10)
+
+    def test_requires(self):
+        a, b = requires(['a', 'b'], self.data)
+        self.assertEqual(a, 10)
+        self.assertEqual(b, 20)
+
+        a, = requires(['a'], self.data)
+        self.assertEqual(a, 10)
+
+class Test_get_centroid_weights(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.points = np.array([
+            [0, 0, 0],
+            [1, 1, 1],
+            [5,5,5],
+            [10, 10, 10],
+            [8, 8, 8],
+            [30, 30,30]
+        ])
+        self.centroids = np.array([
+            [0,0,0],
+            [10,10,10],
+            [25,25,25]
+        ])
+
+    def test_centroid_weights(self):
+        weights = get_centroid_weights(self.points, self.centroids)
+        self.assertEqual(weights, [3, 2, 1])
+
+class Test_get_cmap(TestCase):
+
+    def test_use_cmap(self):
+        cmap = get_cmap(10)
+        unique = Counter()
+        for i in range(10):
+            color = cmap(i)
+            unique[color] += 1
+        self.assertEqual(len(unique), 10)
+
+class Test_decreasing_penalty(TestCase):
+
+    def test_single_element(self):
+        self.assertEqual(0, decreasing_penalty([3]))
+
+    def test_multiple_elements(self):
+        self.assertAlmostEqual(2, decreasing_penalty([1, 2, 3, 1, 2, 3]))
+
+class Test_width_penalty(TestCase):
+
+    def test_use(self):
+        self.assertAlmostEqual(1, width_penalty([1,2,3], [2,3,4]))
+
+class Test_outrange_rate(TestCase):
+
+    def test_use(self):
+        X = [0, 0, 0, 0]
+        L = [0.00001, 2, -1, -2]
+        H = [1, 2, -0.00001, 0]
+        inrange = 1
+        outrange = len(X) - inrange
+        self.assertAlmostEqual(outrange / len(X), outrange_rate(X, L, H))
+
+class Test_joint_goodness_penalty(TestCase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.X = [0, 0, 0, 0]
+        self.L = [0.00001, 2, -1, -2]
+        self.H = [1, 2, -0.00001, 0]
+
+    def test_use(self):
+        joint_goodness_penalty(self.X, self.L, self.H)
+
+    def test_C(self):
+        joint_goodness_penalty(self.X, self.L, self.H, C=0.99)
+
+

@@ -279,6 +279,11 @@ def get_cmap(N):
     return map_index_to_rgb_color
 
 def decreasing_penalty(l):
+    assert isinstance(l, (list, tuple))
+
+    if len(l) == 1:
+        return 0
+
     score = 0
     for i in range(1, len(l)):
         score += max(0, l[i] - l[i-1])
@@ -294,20 +299,17 @@ def goodness_penalty(X, L, H):
     # return scaled
 
 def width_penalty(L, H):
-    assert isinstance(L, list)
-    assert isinstance(H, list)
+    assert isinstance(L, (list, tuple))
+    assert isinstance(H, (list, tuple))
     assert len(L) == len(H)
 
-    score = 0
-    for l, h, in zip(L, H):
-        score += h - l
-    scaled = score / len(L)
-    return scaled
+    s = sum(h - l for h, l in zip(H, L))
+    return s / len(L)
 
 def outrange_rate(X, L, H):
-    assert isinstance(X, list)
-    assert isinstance(L, list)
-    assert isinstance(H, list)
+    assert isinstance(X, (list, tuple))
+    assert isinstance(L, (list, tuple))
+    assert isinstance(H, (list, tuple))
     assert len(X) == len(L) == len(H)
 
     score = 0
@@ -317,9 +319,9 @@ def outrange_rate(X, L, H):
     return score / len(X)
 
 def joint_goodness_penalty(X, L, H, C=0.5):
-    assert isinstance(X, list)
-    assert isinstance(L, list)
-    assert isinstance(H, list)
+    assert isinstance(X, (list, tuple))
+    assert isinstance(L, (list, tuple))
+    assert isinstance(H, (list, tuple))
     assert len(X) == len(L) == len(H)
 
     width = width_penalty(L, H)
@@ -327,9 +329,10 @@ def joint_goodness_penalty(X, L, H, C=0.5):
     return C * width + (1 - C) * outrange
 
 def average_width(L, H):
-    assert isinstance(L, list)
-    assert isinstance(H, list)
-    assert len(L) == len(H)
-
-    s = sum(h - l for h, l in zip(H, L))
-    return s / len(L)
+    raise Exception('use width penalty instead')
+    # assert isinstance(L, list)
+    # assert isinstance(H, list)
+    # assert len(L) == len(H)
+    #
+    # s = sum(h - l for h, l in zip(H, L))
+    # return s / len(L)

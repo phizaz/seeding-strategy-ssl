@@ -81,10 +81,10 @@ for ax, dataset in zip(axes.flatten(), datasets):
 
         a = joint_goodness_penalty(col['label_correctness_kmeans_3'], col['goodness_cluster_mocking'], col['goodness_cluster_mocking'])
         L, H = list(zip(*col['goodness_cluster_mocking_nested_ratio_complete']))
-        ratio_w = average_width(L, H)
+        ratio_w = width_penalty(L, H)
         b = joint_goodness_penalty(col['label_correctness_kmeans_3'], L, H)
         L, H = list(zip(*col['goodness_cluster_mocking_nested_split_ward']))
-        split_w = average_width(L, H)
+        split_w = width_penalty(L, H)
         c = joint_goodness_penalty(col['label_correctness_kmeans_3'], L, H)
 
         if 'ratio_dataset' not in bests:
